@@ -5,6 +5,38 @@
 ###############################################################################
 
 services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    env_file: .env
+    mem_limit: 256m
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - internal
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 64m
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   app:
     image: conselhos-app:latest
     build:
@@ -17,6 +49,9 @@ services:
       - app-storage:/var/www/html/storage
     networks:
       - internal
+    depends_on:
+      - db
+      - redis
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -37,7 +72,7 @@ services:
       - app
     networks:
       - internal
-      - proxy
+      - Kblotec
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.conselhos.rule=Host(`conselhos.perui.be`)"
@@ -84,9 +119,11 @@ services:
 volumes:
   app-storage:
     driver: local
+  db-data:
+    driver: local
 
 networks:
   internal:
     driver: overlay
-  proxy:
+  Kblotec:
     external: true

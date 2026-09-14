@@ -35,28 +35,28 @@ sleep 15
 echo "▶ Rodando migrations..."
 docker run --rm \
   --env-file .env \
-  --network conselhos_internal \
+  --network conselhos-app_internal \
   conselhos-app:latest \
   php artisan migrate --force
 
 echo "▶ Rodando seeder de permissões..."
 docker run --rm \
   --env-file .env \
-  --network conselhos_internal \
+  --network conselhos-app_internal \
   conselhos-app:latest \
   php artisan db:seed --class=RolesAndPermissionsSeeder --force
 
 echo "▶ Rodando seeder de super admin..."
 docker run --rm \
   --env-file .env \
-  --network conselhos_internal \
+  --network conselhos-app_internal \
   conselhos-app:latest \
   php artisan db:seed --class=SuperAdminSeeder --force
 
 echo "▶ Limpando caches..."
 docker run --rm \
   --env-file .env \
-  --network conselhos_internal \
+  --network conselhos-app_internal \
   conselhos-app:latest \
   php artisan optimize
 
