@@ -23,7 +23,10 @@ RUN apk add --no-cache \
     icu-dev \
     freetype-dev \
     libjpeg-turbo-dev \
-    libwebp-dev
+    libwebp-dev \
+    autoconf \
+    g++ \
+    make
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
