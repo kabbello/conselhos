@@ -1,0 +1,92 @@
+###############################################################################
+# Conselhos Municipais — Docker Compose (Production)
+# Domínio: conselhos.perui.be
+# Servidor: 37.60.231.53
+###############################################################################
+
+services:
+  app:
+    image: conselhos-app:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    mem_limit: 512m
+    volumes:
+      - app-storage:/var/www/html/storage
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    mem_limit: 64m
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/var/www/html/public:ro
+      - app-storage:/var/www/html/storage:ro
+    depends_on:
+      - app
+    networks:
+      - internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.conselhos.rule=Host(`conselhos.perui.be`)"
+      - "traefik.http.routers.conselhos.entrypoints=websecure"
+      - "traefik.http.routers.conselhos.tls.certresolver=letsencrypt"
+      - "traefik.http.services.conselhos.loadbalancer.server.port=80"
+      - "traefik.http.routers.conselhos-http.rule=Host(`conselhos.perui.be`)"
+      - "traefik.http.routers.conselhos-http.entrypoints=web"
+      - "traefik.http.routers.conselhos-http.middlewares=redirect-https"
+    security_opt:
+      - no-new-privileges:true
+
+  queue:
+    image: conselhos-app:latest
+    restart: unless-stopped
+    env_file: .env
+    mem_limit: 256m
+    command: php artisan queue:work database --sleep=3 --tries=3 --timeout=90 --memory=256
+    volumes:
+      - app-storage:/var/www/html/storage
+    networks:
+      - internal
+    depends_on:
+      - app
+    security_opt:
+      - no-new-privileges:true
+
+  scheduler:
+    image: conselhos-app:latest
+    restart: unless-stopped
+    env_file: .env
+    mem_limit: 128m
+    command: >
+      sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    volumes:
+      - app-storage:/var/www/html/storage
+    networks:
+      - internal
+    depends_on:
+      - app
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  app-storage:
+    driver: local
+
+networks:
+  internal:
+    driver: overlay
+  proxy:
+    external: true

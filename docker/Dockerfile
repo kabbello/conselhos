@@ -1,6 +1,17 @@
+# ─── Stage 1: assets ────────────────────────────────────────────────────────
+FROM node:20-alpine AS assets
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts
+
+COPY . .
+RUN npm run build
+
+# ─── Stage 2: PHP-FPM produção ───────────────────────────────────────────────
 FROM php:8.3-fpm-alpine
 
-# System dependencies
 RUN apk add --no-cache \
     git \
     curl \
@@ -14,7 +25,6 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev \
     libwebp-dev
 
-# PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
         pdo_mysql \
@@ -26,25 +36,26 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
         exif \
         pcntl
 
-# Redis extension
 RUN pecl install redis && docker-php-ext-enable redis
 
-# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# PHP config
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/app.ini
 
 WORKDIR /var/www/html
 
-# Install dependencies (production)
+# Dependências PHP
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
+# Código-fonte
 COPY . .
+
+# Assets compilados do stage 1
+COPY --from=assets /app/public/build ./public/build
+
 RUN composer dump-autoload --optimize
 
-# Permissions
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 

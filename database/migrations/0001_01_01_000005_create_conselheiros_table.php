@@ -8,13 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Conselheiros são os usuários do sistema com perfis específicos
-        // Vinculados a users via user_id (nullable para conselheiros sem acesso ao sistema)
+        // conselheiros = cadastro de pessoas nomeadas para conselhos
+        // user_id = conta de login; nullable porque nem todo nomeado tem acesso ao sistema
         Schema::create('conselheiros', function (Blueprint $table) {
             $table->id();
             $table->foreignId('municipio_id')->constrained('municipios')->cascadeOnDelete();
+
+            // Vínculo com conta de login (nullable: nomeados sem acesso ao sistema)
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->unsignedBigInteger('legacy_id')->nullable()->comment('ID original no sistema legado');
+
+            $table->unsignedBigInteger('legacy_id')->nullable()->comment('id_conselheiro no sistema legado');
             $table->string('nome');
             $table->string('email')->nullable();
             $table->string('telefone', 20)->nullable();
@@ -24,7 +27,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['municipio_id', 'email']);
+            // Email único por município, mas apenas para emails reais
+            // Emails placeholder (sem-email+uuid@conselho.local) não conflitam pois o uuid é único
+            $table->unique(['municipio_id', 'email'], 'unique_conselheiro_email_municipio');
             $table->index(['municipio_id', 'ativo']);
         });
     }

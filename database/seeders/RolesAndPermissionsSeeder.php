@@ -26,15 +26,27 @@ class RolesAndPermissionsSeeder extends Seeder
             // Composição
             'view.composicao', 'create.composicao', 'update.composicao',
             'inativar.composicao', 'importar.composicao', 'view-contato.composicao',
+            'promover.composicao',
 
             // Conselheiros
             'view.conselheiros', 'create.conselheiros', 'update.conselheiros',
             'delete.conselheiros', 'view-sensiveis.conselheiros', 'toggle-ativo.conselheiros',
 
+            // Comissões
+            'view.comissoes', 'create.comissoes', 'update.comissoes', 'delete.comissoes',
+
+            // Processos
+            'view.processos', 'create.processos', 'update.processos', 'delete.processos',
+
+            // Atos Normativos
+            'view.atos-normativos', 'create.atos-normativos', 'update.atos-normativos',
+            'delete.atos-normativos', 'publicar.atos-normativos',
+
             // Reuniões
             'view.reunioes', 'create.reunioes', 'update.reunioes', 'cancelar.reunioes',
             'registrar-presenca.reunioes', 'upload-gravacao.reunioes', 'delete-gravacao.reunioes',
             'upload-imagem.reunioes', 'gerenciar-link.reunioes', 'gerar-pdf.reunioes',
+            'enviar-comunicacao.reunioes',
 
             // Documentos
             'view.documentos', 'view-privados.documentos', 'create.documentos',
@@ -81,11 +93,17 @@ class RolesAndPermissionsSeeder extends Seeder
             'view.conselhos', 'create.conselhos', 'update.conselhos', 'delete.conselhos',
             'view.composicao', 'create.composicao', 'update.composicao',
             'inativar.composicao', 'importar.composicao', 'view-contato.composicao',
+            'promover.composicao',
             'view.conselheiros', 'create.conselheiros', 'update.conselheiros',
             'delete.conselheiros', 'view-sensiveis.conselheiros', 'toggle-ativo.conselheiros',
+            'view.comissoes', 'create.comissoes', 'update.comissoes', 'delete.comissoes',
+            'view.processos', 'create.processos', 'update.processos', 'delete.processos',
+            'view.atos-normativos', 'create.atos-normativos', 'update.atos-normativos',
+            'delete.atos-normativos', 'publicar.atos-normativos',
             'view.reunioes', 'create.reunioes', 'update.reunioes', 'cancelar.reunioes',
             'registrar-presenca.reunioes', 'upload-gravacao.reunioes', 'delete-gravacao.reunioes',
             'upload-imagem.reunioes', 'gerenciar-link.reunioes', 'gerar-pdf.reunioes',
+            'enviar-comunicacao.reunioes',
             'view.documentos', 'view-privados.documentos', 'create.documentos',
             'update.documentos', 'publicar.documentos', 'delete.documentos',
             'view.legislacao', 'create.legislacao', 'update.legislacao', 'delete.legislacao',
@@ -105,10 +123,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'view.conselhos',
             'view.composicao', 'create.composicao', 'update.composicao',
             'inativar.composicao', 'importar.composicao', 'view-contato.composicao',
+            'promover.composicao',
             'view.conselheiros', 'create.conselheiros', 'update.conselheiros',
+            'view.comissoes', 'create.comissoes', 'update.comissoes',
+            'view.processos', 'create.processos', 'update.processos',
+            'view.atos-normativos', 'create.atos-normativos', 'update.atos-normativos', 'publicar.atos-normativos',
             'view.reunioes', 'create.reunioes', 'update.reunioes', 'cancelar.reunioes',
             'registrar-presenca.reunioes', 'upload-gravacao.reunioes', 'delete-gravacao.reunioes',
             'upload-imagem.reunioes', 'gerenciar-link.reunioes', 'gerar-pdf.reunioes',
+            'enviar-comunicacao.reunioes',
             'view.documentos', 'view-privados.documentos', 'create.documentos',
             'update.documentos', 'publicar.documentos', 'delete.documentos',
             'view.legislacao', 'create.legislacao', 'update.legislacao',
@@ -136,9 +159,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'view.conselhos', 'update.conselhos',
             'view.composicao', 'create.composicao', 'update.composicao', 'view-contato.composicao',
             'view.conselheiros', 'create.conselheiros', 'update.conselheiros',
+            'view.comissoes', 'create.comissoes', 'update.comissoes',
+            'view.processos', 'create.processos', 'update.processos',
+            'view.atos-normativos', 'create.atos-normativos', 'update.atos-normativos',
             'view.reunioes', 'create.reunioes', 'update.reunioes',
             'registrar-presenca.reunioes', 'upload-gravacao.reunioes',
             'upload-imagem.reunioes', 'gerenciar-link.reunioes', 'gerar-pdf.reunioes',
+            'enviar-comunicacao.reunioes',
             'view.documentos', 'view-privados.documentos', 'create.documentos', 'update.documentos',
             'view.legislacao', 'create.legislacao', 'update.legislacao',
             'view.notificacoes', 'reenviar.notificacoes',

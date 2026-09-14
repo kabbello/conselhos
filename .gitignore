@@ -1,8 +1,13 @@
 *.log
+*.zip
 .DS_Store
 .env
 .env.backup
 .env.production
+.env.local
+.env.testing
+AUDITORIA_TECNICA_JURIDICA_CONSELHOS.md
+REAVALIACAO_CONSELHOS_V2_2026-09-14.md
 .phpactor.json
 .phpunit.result.cache
 /.fleet

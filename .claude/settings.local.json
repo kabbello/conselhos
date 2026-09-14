@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(git:*)",
+      "Bash(grep -r \"encerrar\\\\|promover\\\\|notificar\\\\|publicar\" /d/projetos/conselhos-app/Modules/*/Filament/Resources --include=\"*.php\" -l)",
+      "Bash(xargs -I {} find {} -name \"*.php\")",
+      "Bash(ssh:*)"
+    ]
+  }
+}

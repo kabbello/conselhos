@@ -11,6 +11,8 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -25,6 +27,44 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
  */
 class PainelPanelProvider extends PanelProvider
 {
+    public function register(): void
+    {
+        parent::register();
+
+        // A09: banner de aviso inequívoco durante sessão de impersonation.
+        // O package lab404/laravel-impersonate armazena o ID do impersonador na sessão.
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::BODY_START,
+            fn (): string => $this->impersonationBanner(),
+        );
+    }
+
+    private function impersonationBanner(): string
+    {
+        // A chave de sessão usada pelo lab404/laravel-impersonate
+        if (! session()->has('impersonated_by')) {
+            return '';
+        }
+
+        $impersonatorId   = session('impersonated_by');
+        $impersonatorName = \App\Models\User::find($impersonatorId)?->name ?? 'administrador';
+
+        return <<<HTML
+        <div style="
+            position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+            background: #b45309; color: #fff;
+            padding: 8px 16px; text-align: center; font-weight: 600; font-size: 0.85rem;
+        ">
+            ⚠ Você está em modo de impersonation — sessão de <em>{$impersonatorName}</em>.
+            Todas as ações são registradas.
+            <a href="/painel/leave-impersonation"
+               style="margin-left: 16px; color: #fde68a; text-decoration: underline;">
+               Encerrar sessão
+            </a>
+        </div>
+        HTML;
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -40,12 +80,44 @@ class PainelPanelProvider extends PanelProvider
             ->tenant(Municipio::class, slugAttribute: 'slug')
             ->tenantRoutePrefix('municipio')
             ->discoverResources(
-                in: app_path('Modules'),
-                for: 'App\\Modules'
+                in: base_path('Modules/Conselhos/Filament/Resources'),
+                for: 'Modules\\Conselhos\\Filament\\Resources'
+            )
+            ->discoverResources(
+                in: base_path('Modules/Composicao/Filament/Resources'),
+                for: 'Modules\\Composicao\\Filament\\Resources'
+            )
+            ->discoverResources(
+                in: base_path('Modules/Comissoes/Filament/Resources'),
+                for: 'Modules\\Comissoes\\Filament\\Resources'
+            )
+            ->discoverResources(
+                in: base_path('Modules/Resolucoes/Filament/Resources'),
+                for: 'Modules\\Resolucoes\\Filament\\Resources'
+            )
+            ->discoverResources(
+                in: base_path('Modules/Reunioes/Filament/Resources'),
+                for: 'Modules\\Reunioes\\Filament\\Resources'
+            )
+            ->discoverResources(
+                in: base_path('Modules/Documentos/Filament/Resources'),
+                for: 'Modules\\Documentos\\Filament\\Resources'
+            )
+            ->discoverResources(
+                in: app_path('Filament/Painel/Resources'),
+                for: 'App\\Filament\\Painel\\Resources'
+            )
+            ->discoverResources(
+                in: base_path('Modules/Auditoria/Filament/Resources'),
+                for: 'Modules\\Auditoria\\Filament\\Resources'
+            )
+            ->discoverResources(
+                in: base_path('Modules/LGPD/Filament/Resources'),
+                for: 'Modules\\LGPD\\Filament\\Resources'
             )
             ->discoverPages(
-                in: app_path('Filament/Painel/Pages'),
-                for: 'App\\Filament\\Painel\\Pages'
+                in: base_path('Modules/Painel/Pages'),
+                for: 'Modules\\Painel\\Pages'
             )
             ->pages([
                 Pages\Dashboard::class,
@@ -56,6 +128,7 @@ class PainelPanelProvider extends PanelProvider
             )
             ->widgets([
                 Widgets\AccountWidget::class,
+                \App\Filament\Painel\Widgets\MunicipioStatsWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -70,6 +143,7 @@ class PainelPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\ForcePasswordReset::class,
             ])
             ->authGuard('web');
     }

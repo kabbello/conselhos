@@ -84,6 +84,20 @@ return [
             ]) : [],
         ],
 
+        // Banco legado do sistema PHP Maker — somente leitura durante importação
+        'legacy' => [
+            'driver'    => 'mysql',
+            'host'      => env('DB_LEGACY_HOST', '127.0.0.1'),
+            'port'      => env('DB_LEGACY_PORT', '3306'),
+            'database'  => env('DB_LEGACY_DATABASE', 'peruibe_legacy'),
+            'username'  => env('DB_LEGACY_USERNAME', 'root'),
+            'password'  => env('DB_LEGACY_PASSWORD', ''),
+            'charset'   => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix'    => '',
+            'strict'    => false,
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
