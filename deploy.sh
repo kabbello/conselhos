@@ -66,4 +66,4 @@ docker run --rm \
   php artisan optimize
 
 echo ""
-echo "✓ Deploy concluído — https://conselhos.perui.be"
+echo "✓ Deploy concluído — https://conselhosmunicipais.app.br"

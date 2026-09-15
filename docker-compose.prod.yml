@@ -1,6 +1,6 @@
 ###############################################################################
 # Conselhos Municipais — Docker Compose (Production / Swarm)
-# Domínio: conselhos.perui.be
+# Domínio: conselhosmunicipais.app.br
 # Servidor: 37.60.231.53
 ###############################################################################
 
@@ -83,11 +83,11 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.conselhos.rule=Host(`conselhos.perui.be`)"
+        - "traefik.http.routers.conselhos.rule=Host(`conselhosmunicipais.app.br`)"
         - "traefik.http.routers.conselhos.entrypoints=websecure"
         - "traefik.http.routers.conselhos.tls.certresolver=letsencrypt"
         - "traefik.http.services.conselhos.loadbalancer.server.port=80"
-        - "traefik.http.routers.conselhos-http.rule=Host(`conselhos.perui.be`)"
+        - "traefik.http.routers.conselhos-http.rule=Host(`conselhosmunicipais.app.br`)"
         - "traefik.http.routers.conselhos-http.entrypoints=web"
         - "traefik.http.routers.conselhos-http.middlewares=redirect-https"
         - "traefik.docker.network=Kblotec"
