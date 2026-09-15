@@ -85,7 +85,7 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.conselhos.rule=Host(`conselhosmunicipais.app.br`)"
         - "traefik.http.routers.conselhos.entrypoints=websecure"
-        - "traefik.http.routers.conselhos.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.conselhos.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.conselhos.loadbalancer.server.port=80"
         - "traefik.http.routers.conselhos-http.rule=Host(`conselhosmunicipais.app.br`)"
         - "traefik.http.routers.conselhos-http.entrypoints=web"
