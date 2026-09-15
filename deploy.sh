@@ -26,11 +26,16 @@ fi
 echo "▶ Buildando imagem..."
 docker build -t conselhos-app:latest -f docker/Dockerfile .
 
+echo "▶ Extraindo assets compilados para public/build..."
+docker create --name tmp-assets conselhos-app:latest
+docker cp tmp-assets:/var/www/html/public/build "$APP_DIR/public/"
+docker rm tmp-assets
+
 echo "▶ Subindo stack..."
 docker stack deploy -c docker-compose.prod.yml "$STACK" --with-registry-auth
 
 echo "▶ Aguardando container app ficar pronto..."
-sleep 15
+sleep 20
 
 echo "▶ Rodando migrations..."
 docker run --rm \
