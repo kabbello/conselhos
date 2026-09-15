@@ -11,6 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Confia em todos os proxies reversos (Traefik) para que o Laravel
+        // gere URLs HTTPS corretamente quando está atrás de um load balancer.
+        $middleware->trustProxies(at: '*');
+
         // A06: headers de segurança HTTP em todas as respostas web
         $middleware->web(append: [
             \App\Http\Middleware\SecurityHeaders::class,
