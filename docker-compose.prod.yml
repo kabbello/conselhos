@@ -12,16 +12,12 @@ services:
       - db-data:/var/lib/mysql
     networks:
       - internal
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
-      interval: 10s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=$$MYSQL_ROOT_PASSWORD"]
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 30s
     deploy:
       replicas: 1
       resources:
