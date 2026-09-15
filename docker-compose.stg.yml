@@ -12,11 +12,6 @@ services:
       - db-data-stg:/var/lib/mysql
     networks:
       - internal
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=$$MYSQL_ROOT_PASSWORD"]
       interval: 15s
