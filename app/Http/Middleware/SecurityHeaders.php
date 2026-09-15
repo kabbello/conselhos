@@ -42,12 +42,16 @@ class SecurityHeaders
         //
         // 'unsafe-eval' foi REMOVIDO: Alpine.js v3 compilado via Vite não requer eval.
         // Se algum plugin ou widget de terceiro quebrar, investigar antes de reativar.
+        $r2Url = rtrim(config('filesystems.disks.r2.url', ''), '/');
+        $r2Host = $r2Url ? parse_url($r2Url, PHP_URL_HOST) : null;
+        $imgSrc = $r2Host ? "img-src 'self' data: blob: https://{$r2Host}" : "img-src 'self' data: blob:";
+
         $response->headers->set('Content-Security-Policy', implode('; ', [
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline'",  // Livewire/Alpine: inline necessário; eval removido
             "style-src 'self' 'unsafe-inline'",   // Tailwind inline styles
-            "img-src 'self' data: blob:",
-            "font-src 'self' data:",
+            $imgSrc,
+            "font-src 'self' data: https://fonts.bunny.net",
             "connect-src 'self'",
             "frame-ancestors 'none'",
             "base-uri 'self'",
