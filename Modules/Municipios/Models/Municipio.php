@@ -54,12 +54,12 @@ class Municipio extends Model implements HasName
 
     public function getLogoUrlAttribute(): ?string
     {
-        return $this->logo_path ? Storage::url($this->logo_path) : null;
+        return $this->logo_path ? Storage::disk('r2')->url($this->logo_path) : null;
     }
 
     public function getBrasaoUrlAttribute(): ?string
     {
-        return $this->brasao_path ? Storage::url($this->brasao_path) : null;
+        return $this->brasao_path ? Storage::disk('r2')->url($this->brasao_path) : null;
     }
 
     public function conselhos(): HasMany

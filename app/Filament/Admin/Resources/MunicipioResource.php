@@ -80,7 +80,7 @@ class MunicipioResource extends Resource
                     ->label('Logotipo')
                     ->image()
                     ->imageEditor()
-                    ->disk('public')
+                    ->disk('r2')
                     ->directory('municipios/logos')
                     ->visibility('public')
                     ->maxSize(2048)
@@ -172,7 +172,7 @@ class MunicipioResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('logo_path')
                     ->label('Logo')
-                    ->disk('public')
+                    ->disk('r2')
                     ->height(36)
                     ->defaultImageUrl(fn () => null)
                     ->extraImgAttributes(['class' => 'rounded']),
