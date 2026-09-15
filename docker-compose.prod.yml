@@ -1,5 +1,5 @@
 ###############################################################################
-# Conselhos Municipais — Docker Compose (Production)
+# Conselhos Municipais — Docker Compose (Production / Swarm)
 # Domínio: conselhos.perui.be
 # Servidor: 37.60.231.53
 ###############################################################################
@@ -7,9 +7,7 @@
 services:
   db:
     image: mysql:8.0
-    restart: unless-stopped
     env_file: .env
-    mem_limit: 256m
     volumes:
       - db-data:/var/lib/mysql
     networks:
@@ -24,11 +22,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 256m
+      restart_policy:
+        condition: on-failure
 
   redis:
     image: redis:7-alpine
-    restart: unless-stopped
-    mem_limit: 64m
     networks:
       - internal
     healthcheck:
@@ -36,85 +39,93 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 64m
+      restart_policy:
+        condition: on-failure
 
   app:
     image: conselhos-app:latest
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    restart: unless-stopped
     env_file: .env
-    mem_limit: 512m
     volumes:
       - app-storage:/var/www/html/storage
     networks:
       - internal
-    depends_on:
-      - db
-      - redis
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "php-fpm", "-t"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 512m
+      restart_policy:
+        condition: on-failure
 
   nginx:
     image: nginx:1.27-alpine
-    restart: unless-stopped
-    mem_limit: 64m
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./public:/var/www/html/public:ro
       - app-storage:/var/www/html/storage:ro
-    depends_on:
-      - app
     networks:
       - internal
       - Kblotec
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.conselhos.rule=Host(`conselhos.perui.be`)"
-      - "traefik.http.routers.conselhos.entrypoints=websecure"
-      - "traefik.http.routers.conselhos.tls.certresolver=letsencrypt"
-      - "traefik.http.services.conselhos.loadbalancer.server.port=80"
-      - "traefik.http.routers.conselhos-http.rule=Host(`conselhos.perui.be`)"
-      - "traefik.http.routers.conselhos-http.entrypoints=web"
-      - "traefik.http.routers.conselhos-http.middlewares=redirect-https"
-    security_opt:
-      - no-new-privileges:true
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 64m
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.conselhos.rule=Host(`conselhos.perui.be`)"
+        - "traefik.http.routers.conselhos.entrypoints=websecure"
+        - "traefik.http.routers.conselhos.tls.certresolver=letsencrypt"
+        - "traefik.http.services.conselhos.loadbalancer.server.port=80"
+        - "traefik.http.routers.conselhos-http.rule=Host(`conselhos.perui.be`)"
+        - "traefik.http.routers.conselhos-http.entrypoints=web"
+        - "traefik.http.routers.conselhos-http.middlewares=redirect-https"
+        - "traefik.docker.network=Kblotec"
 
   queue:
     image: conselhos-app:latest
-    restart: unless-stopped
     env_file: .env
-    mem_limit: 256m
-    command: php artisan queue:work database --sleep=3 --tries=3 --timeout=90 --memory=256
+    command: php artisan queue:work redis --sleep=3 --tries=3 --timeout=90 --memory=256
     volumes:
       - app-storage:/var/www/html/storage
     networks:
       - internal
-    depends_on:
-      - app
-    security_opt:
-      - no-new-privileges:true
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 256m
+      restart_policy:
+        condition: on-failure
 
   scheduler:
     image: conselhos-app:latest
-    restart: unless-stopped
     env_file: .env
-    mem_limit: 128m
     command: >
       sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
     volumes:
       - app-storage:/var/www/html/storage
     networks:
       - internal
-    depends_on:
-      - app
-    security_opt:
-      - no-new-privileges:true
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 128m
+      restart_policy:
+        condition: on-failure
 
 volumes:
   app-storage:
