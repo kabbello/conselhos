@@ -1,0 +1,136 @@
+###############################################################################
+# Conselhos Municipais — Docker Compose (Staging)
+# Domínio: stg.conselhosmunicipais.app.br
+# Servidor: 37.60.231.53
+###############################################################################
+
+services:
+  db:
+    image: mysql:8.0
+    env_file: .env.stg
+    volumes:
+      - db-data-stg:/var/lib/mysql
+    networks:
+      - internal
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=$$MYSQL_ROOT_PASSWORD"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 256m
+      restart_policy:
+        condition: on-failure
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - internal
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 64m
+      restart_policy:
+        condition: on-failure
+
+  app:
+    image: conselhos-app:latest
+    env_file: .env.stg
+    volumes:
+      - app-storage-stg:/var/www/html/storage
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 512m
+      restart_policy:
+        condition: on-failure
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/var/www/html/public:ro
+      - app-storage-stg:/var/www/html/storage:ro
+    networks:
+      - internal
+      - Kblotec
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 64m
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.conselhos-stg.rule=Host(`stg.conselhosmunicipais.app.br`)"
+        - "traefik.http.routers.conselhos-stg.entrypoints=websecure"
+        - "traefik.http.routers.conselhos-stg.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.conselhos-stg.loadbalancer.server.port=80"
+        - "traefik.http.routers.conselhos-stg-http.rule=Host(`stg.conselhosmunicipais.app.br`)"
+        - "traefik.http.routers.conselhos-stg-http.entrypoints=web"
+        - "traefik.http.routers.conselhos-stg-http.middlewares=redirect-https"
+        - "traefik.docker.network=Kblotec"
+
+  queue:
+    image: conselhos-app:latest
+    env_file: .env.stg
+    command: php artisan queue:work redis --sleep=3 --tries=3 --timeout=90 --memory=256
+    volumes:
+      - app-storage-stg:/var/www/html/storage
+    networks:
+      - internal
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 256m
+      restart_policy:
+        condition: on-failure
+
+  scheduler:
+    image: conselhos-app:latest
+    env_file: .env.stg
+    command: >
+      sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    volumes:
+      - app-storage-stg:/var/www/html/storage
+    networks:
+      - internal
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 128m
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  app-storage-stg:
+    driver: local
+  db-data-stg:
+    driver: local
+
+networks:
+  internal:
+    driver: overlay
+  Kblotec:
+    external: true
