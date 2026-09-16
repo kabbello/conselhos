@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Modules\Municipios\Models\Municipio;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -35,6 +36,11 @@ class Conselheiro extends Model
     protected $casts = [
         'ativo' => 'boolean',
     ];
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        return $this->foto_path ? Storage::disk('r2')->url($this->foto_path) : null;
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
