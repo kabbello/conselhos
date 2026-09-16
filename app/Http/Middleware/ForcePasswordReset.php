@@ -32,19 +32,21 @@ class ForcePasswordReset
         }
 
         if ($user && $user->must_reset_password && ! $this->isRotaPermitida($request)) {
-            // Redireciona para a página de perfil do Filament onde a senha pode ser alterada.
-            // O painel usa multi-tenancy; a URL exata inclui o slug do município.
-            // Como fallback seguro usamos o tenant atual ou simplesmente /painel.
-            $tenant = filament()->getTenant();
-            $slug   = $tenant?->slug ?? '';
-
-            $profileUrl = $slug
-                ? url("/painel/municipio/{$slug}/profile")
-                : url('/painel');
-
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Troca de senha obrigatória.'], 403);
             }
+
+            // Tenta obter o slug do município:
+            // 1. Tenant já resolvido na URL atual (ex: /painel/municipio/peruibe/...)
+            // 2. Municipio vinculado ao usuário (ex: login recém-feito, sem tenant na URL)
+            // 3. Fallback: /painel/profile (sem tenant — evita o loop de redirect)
+            $slug = filament()->getTenant()?->slug
+                ?? $user->municipio?->slug
+                ?? null;
+
+            $profileUrl = $slug
+                ? url("/painel/municipio/{$slug}/profile")
+                : url('/painel/profile');
 
             return redirect($profileUrl)->with(
                 'warning',
