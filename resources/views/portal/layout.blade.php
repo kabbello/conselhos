@@ -174,7 +174,7 @@
                     Conselhos
                 </a>
 
-                <a href="{{ url('/painel') }}"
+                <a href="{{ url('/painel/login') }}"
                    class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/30 hover:bg-white/15 hover:border-white/60 transition-colors text-sm ml-2"
                    aria-label="Acesso restrito — área dos gestores">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
