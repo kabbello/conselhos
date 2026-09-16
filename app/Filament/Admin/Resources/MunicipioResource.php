@@ -4,11 +4,14 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\MunicipioResource\Pages;
 use App\Models\Municipio;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class MunicipioResource extends Resource
@@ -225,6 +228,97 @@ class MunicipioResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+
+                Tables\Actions\Action::make('criar_admin')
+                    ->label('Criar Admin')
+                    ->icon('heroicon-o-user-plus')
+                    ->color('success')
+                    ->modalHeading(fn (Municipio $record) => "Criar administrador — {$record->nome}")
+                    ->modalDescription('Cria o primeiro usuário administrador municipal. Uma senha temporária será definida e o usuário será obrigado a redefini-la no primeiro acesso.')
+                    ->form([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Nome completo')
+                            ->required()
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('email')
+                            ->label('E-mail')
+                            ->email()
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(User::class, 'email'),
+
+                        Forms\Components\TextInput::make('password')
+                            ->label('Senha temporária')
+                            ->password()
+                            ->revealable()
+                            ->required()
+                            ->minLength(8)
+                            ->helperText('O usuário deverá redefinir esta senha no primeiro acesso.'),
+                    ])
+                    ->action(function (Municipio $record, array $data) {
+                        $user = User::create([
+                            'municipio_id'        => $record->id,
+                            'name'                => $data['name'],
+                            'email'               => $data['email'],
+                            'password'            => Hash::make($data['password']),
+                            'must_reset_password' => true,
+                        ]);
+                        $user->assignRole('admin_municipal');
+
+                        Notification::make()
+                            ->title('Administrador criado com sucesso')
+                            ->body("Usuário {$data['email']} criado para {$record->nome}.")
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('impersonar')
+                    ->label('Impersonar')
+                    ->icon('heroicon-o-identification')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Municipio $record) => "Impersonar admin — {$record->nome}")
+                    ->modalDescription(null)
+                    ->form([
+                        Forms\Components\Textarea::make('motivo')
+                            ->label('Motivo (obrigatório)')
+                            ->required()
+                            ->minLength(10)
+                            ->rows(3)
+                            ->placeholder('Descreva o motivo técnico ou operacional para acessar esta conta.')
+                            ->helperText('O motivo é registrado no log de auditoria.'),
+                    ])
+                    ->action(function (Municipio $record, array $data) {
+                        $admin = User::where('municipio_id', $record->id)
+                            ->whereHas('roles', fn ($q) => $q->where('name', 'admin_municipal'))
+                            ->first();
+
+                        if (! $admin) {
+                            Notification::make()
+                                ->title('Nenhum administrador encontrado')
+                                ->body("Crie primeiro um administrador para {$record->nome}.")
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
+                        activity('impersonation')
+                            ->causedBy(auth()->user())
+                            ->performedOn($admin)
+                            ->withProperties([
+                                'motivo'             => $data['motivo'],
+                                'impersonator_email' => auth()->user()->email,
+                                'impersonated_email' => $admin->email,
+                                'municipio'          => $record->nome,
+                            ])
+                            ->event('impersonation_autorizado')
+                            ->log('Impersonação via MunicipioResource: ' . $admin->email);
+
+                        auth()->user()->impersonate($admin);
+
+                        return redirect('/painel/municipio/' . $record->slug);
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
