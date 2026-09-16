@@ -57,7 +57,7 @@ class PainelPanelProvider extends PanelProvider
         ">
             ⚠ Você está em modo de impersonation — sessão de <em>{$impersonatorName}</em>.
             Todas as ações são registradas.
-            <a href="/painel/leave-impersonation"
+            <a href="/filament-impersonate/leave"
                style="margin-left: 16px; color: #fde68a; text-decoration: underline;">
                Encerrar sessão
             </a>
