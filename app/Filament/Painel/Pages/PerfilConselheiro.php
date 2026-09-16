@@ -66,12 +66,18 @@ class PerfilConselheiro extends EditProfile
 
     protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
-        $conselheiro = $record->conselheiro;
+        $conselheiro     = $record->conselheiro;
+        $trocouSenha     = filled($data['password'] ?? null);
 
         // Extrai e remove campos do conselheiro antes de salvar o User
         $foto     = $data['conselheiro_foto'] ?? null;
         $telefone = $data['conselheiro_telefone'] ?? null;
         unset($data['conselheiro_foto'], $data['conselheiro_telefone'], $data['conselheiro_cpf']);
+
+        // Se trocou a senha, limpa o flag de reset obrigatório
+        if ($trocouSenha) {
+            $data['must_reset_password'] = false;
+        }
 
         $record = parent::handleRecordUpdate($record, $data);
 
@@ -95,5 +101,18 @@ class PerfilConselheiro extends EditProfile
         }
 
         return $record;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        $user      = auth()->user();
+        $municipio = $user->municipio;
+
+        if ($municipio) {
+            return url("/painel/municipio/{$municipio->slug}");
+        }
+
+        // super_admin ou usuário sem município — vai para o painel raiz
+        return url('/painel');
     }
 }
