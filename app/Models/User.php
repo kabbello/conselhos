@@ -101,7 +101,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
             return true;
         }
 
-        return $this->municipio_id === $tenant->id;
+        return (int) $this->municipio_id === (int) $tenant->id;
     }
 
     // ---------- Relacionamentos ----------
