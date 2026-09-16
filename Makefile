@@ -56,6 +56,34 @@ horizon:    ## Exibe logs do Horizon (worker de filas)
 queue-work: ## Inicia processamento de filas (dev sem Horizon)
 	docker compose exec app php artisan queue:work
 
+# ─── Deploy (servidor de produção) ──────────────────────────────────────────
+
+SERVER  := root@37.60.231.53
+APP_DIR := /opt/conselhos-app
+STACK   := conselhos-app
+
+deploy: ## Deploy completo: pull → build → extrai assets → restart → optimize
+	@echo "▶ Pull..."
+	ssh $(SERVER) "git -C $(APP_DIR) pull origin master"
+	@echo "▶ Build..."
+	ssh $(SERVER) "docker build -f $(APP_DIR)/docker/Dockerfile -t $(STACK):latest $(APP_DIR)"
+	@echo "▶ Extrai assets para o host..."
+	ssh $(SERVER) '\
+		TMP=$$(docker create $(STACK):latest) && \
+		docker cp $$TMP:/var/www/html/public/build $(APP_DIR)/public/ && \
+		docker rm $$TMP'
+	@echo "▶ Restart serviços..."
+	ssh $(SERVER) "docker service update --force $(STACK)_app && docker service update --force $(STACK)_scheduler && docker service update --force $(STACK)_queue"
+	@echo "▶ Optimize..."
+	ssh $(SERVER) 'docker exec $$(docker ps --format "{{.ID}} {{.Names}}" | grep $(STACK)_app | awk "{print \$$1}") php artisan optimize'
+	@echo "✔ Deploy concluído."
+
+deploy-assets: ## Apenas extrai assets do container atual para o host (sem rebuild)
+	ssh $(SERVER) '\
+		CONTAINER=$$(docker ps --format "{{.ID}} {{.Names}}" | grep $(STACK)_app | awk "{print \$$1}") && \
+		docker cp $$CONTAINER:/var/www/html/public/build $(APP_DIR)/public/ && \
+		echo "Assets extraídos."'
+
 # ─── Ajuda ───────────────────────────────────────────────────────────────────
 
 help:       ## Lista os targets disponíveis
