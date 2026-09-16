@@ -16,6 +16,8 @@ class Comissao extends Model
 {
     use HasFactory, LogsActivity, SoftDeletes;
 
+    protected $table = 'comissoes';
+
     protected $fillable = [
         'conselho_id',
         'nome',
