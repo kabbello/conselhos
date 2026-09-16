@@ -315,7 +315,16 @@ class MunicipioResource extends Resource
                             ->event('impersonation_autorizado')
                             ->log('Impersonação via MunicipioResource: ' . $admin->email);
 
-                        auth()->user()->impersonate($admin);
+                        // Grava as chaves de sessão que o stechstudio/filament-impersonate
+                        // espera ao encerrar a sessão (leave). Sem isso, back_to seria null
+                        // e redirect(null) causaria TypeError 500.
+                        session()->put([
+                            'impersonate.back_to' => url('/admin'),
+                            'impersonate.guard'   => 'web',
+                        ]);
+
+                        app(\Lab404\Impersonate\Services\ImpersonateManager::class)
+                            ->take(auth()->user(), $admin, 'web');
 
                         return redirect('/painel/municipio/' . $record->slug);
                     }),
