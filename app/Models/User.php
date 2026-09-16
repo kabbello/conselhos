@@ -16,13 +16,14 @@ use Modules\Conselhos\Models\Conselho;
 use Modules\Municipios\Models\Municipio;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Lab404\Impersonate\Models\Impersonate as CanImpersonate;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasTenants
 {
-    use HasFactory, HasRoles, LogsActivity, Notifiable;
+    use CanImpersonate, HasFactory, HasRoles, LogsActivity, Notifiable;
 
     protected $fillable = [
         'municipio_id',
