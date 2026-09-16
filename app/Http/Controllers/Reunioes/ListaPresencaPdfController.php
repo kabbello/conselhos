@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Reunioes;
 
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Gate;
 use Modules\Composicao\Models\Composicao;
 use Modules\Reunioes\Models\Reuniao;
 
@@ -11,7 +12,7 @@ class ListaPresencaPdfController extends Controller
 {
     public function __invoke(Reuniao $reuniao)
     {
-        $this->authorize('view', $reuniao);
+        Gate::authorize('view', $reuniao);
 
         // Carrega relações necessárias para o PDF
         $reuniao->load([
