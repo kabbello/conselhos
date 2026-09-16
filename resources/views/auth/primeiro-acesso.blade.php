@@ -11,7 +11,6 @@
 </head>
 <body class="min-h-screen bg-gray-50 flex flex-col">
 
-    {{-- Header --}}
     <header class="bg-white border-b border-gray-200 px-6 py-4">
         <div class="max-w-lg mx-auto flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">CM</div>
@@ -22,50 +21,14 @@
     <main class="flex-1 flex items-center justify-center px-4 py-12">
         <div class="w-full max-w-md">
 
-            {{-- Sucesso --}}
             @if (session('sucesso'))
-                <div class="mb-6 rounded-xl bg-green-50 border border-green-200 p-5 text-center">
-                    <div class="text-3xl mb-2">✉️</div>
-                    <p class="font-semibold text-green-800 mb-1">Verifique seu e-mail</p>
+                <div class="mb-6 rounded-xl bg-green-50 border border-green-200 p-6 text-center">
+                    <div class="text-4xl mb-3">✉️</div>
+                    <p class="font-semibold text-green-800 mb-2">Verifique seu e-mail</p>
                     <p class="text-green-700 text-sm">{{ session('sucesso') }}</p>
-                    <a href="/painel/login" class="mt-4 inline-block text-sm text-blue-600 hover:underline">Ir para o login</a>
+                    <p class="text-gray-500 text-xs mt-3">Não recebeu? Verifique a pasta de spam ou entre em contato com o administrador do seu município.</p>
+                    <a href="/painel/login" class="mt-4 inline-block text-sm text-blue-600 hover:underline font-medium">Ir para o login →</a>
                 </div>
-
-            {{-- Formulário: pedir e-mail do conselheiro sem e-mail cadastrado --}}
-            @elseif (session('pedir_email'))
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                    <div class="text-center mb-6">
-                        <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
-                            <svg class="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
-                            </svg>
-                        </div>
-                        <h1 class="text-xl font-bold text-gray-900">Cadastrar e-mail</h1>
-                        <p class="text-gray-500 text-sm mt-1">Olá, <strong>{{ session('conselheiro_nome') }}</strong>! Informe seu e-mail para receber o link de acesso.</p>
-                    </div>
-
-                    <form method="POST" action="{{ route('auth.primeiro-acesso.email') }}" class="space-y-4">
-                        @csrf
-                        <input type="hidden" name="conselheiro_id" value="{{ session('conselheiro_id') }}">
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                            <input type="email" name="email" value="{{ old('email') }}" required
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('email') border-red-400 @enderror"
-                                   placeholder="seu@email.com">
-                            @error('email')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <button type="submit"
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors">
-                            Cadastrar e-mail e receber link de acesso
-                        </button>
-                    </form>
-                </div>
-
-            {{-- Formulário principal: identificar conselheiro --}}
             @else
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
                     <div class="text-center mb-6">
@@ -75,7 +38,7 @@
                             </svg>
                         </div>
                         <h1 class="text-xl font-bold text-gray-900">Primeiro acesso</h1>
-                        <p class="text-gray-500 text-sm mt-1">Sou conselheiro e quero acessar o sistema</p>
+                        <p class="text-gray-500 text-sm mt-1">Sou conselheiro e quero criar minha senha de acesso</p>
                     </div>
 
                     @if ($errors->any())
@@ -88,22 +51,27 @@
                         @csrf
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">E-mail ou CPF cadastrado</label>
-                            <input type="text" name="identificador" value="{{ old('identificador') }}" required autofocus
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                E-mail cadastrado pelo administrador
+                            </label>
+                            <input type="email" name="email" value="{{ old('email') }}"
+                                   required autofocus autocomplete="email"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                   placeholder="seu@email.com ou 000.000.000-00">
-                            <p class="mt-1 text-xs text-gray-400">Informe o e-mail ou CPF registrado quando você foi nomeado(a) como conselheiro(a).</p>
+                                   placeholder="seu@email.com">
+                            <p class="mt-1.5 text-xs text-gray-400">
+                                Use o e-mail que o administrador municipal registrou no seu cadastro de conselheiro.
+                            </p>
                         </div>
 
                         <button type="submit"
                                 class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors">
-                            Verificar e receber link de acesso
+                            Receber link de acesso
                         </button>
                     </form>
 
                     <div class="mt-6 pt-5 border-t border-gray-100 text-center space-y-2">
                         <a href="/painel/login" class="block text-sm text-blue-600 hover:underline">
-                            Já tenho cadastro — Fazer login
+                            Já tenho senha — Fazer login
                         </a>
                         <a href="/painel/password-reset/request" class="block text-sm text-gray-500 hover:underline">
                             Esqueci minha senha
@@ -111,10 +79,11 @@
                     </div>
                 </div>
 
-                <p class="mt-6 text-center text-xs text-gray-400">
-                    Problema com o acesso? Entre em contato com o administrador do seu município.
+                <p class="mt-5 text-center text-xs text-gray-400">
+                    E-mail não cadastrado? Entre em contato com o administrador do seu município para que ele registre seu e-mail no sistema.
                 </p>
             @endif
+
         </div>
     </main>
 
