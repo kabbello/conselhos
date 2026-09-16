@@ -7,6 +7,10 @@ use Illuminate\Support\ServiceProvider;
 use Lab404\Impersonate\Events\TakeImpersonation;
 use Lab404\Impersonate\Events\LeaveImpersonation;
 use Illuminate\Support\Facades\Event;
+use Modules\Composicao\Models\Composicao;
+use Modules\Composicao\Observers\ComposicaoObserver;
+use Modules\Reunioes\Models\Reuniao;
+use Modules\Reunioes\Observers\ReuniaoObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Regra: PRESIDENTE ativo = gestor natural → formaliza vínculo em user_conselho_gestores
+        Composicao::observe(ComposicaoObserver::class);
+
+        // Notificações automáticas ao criar/alterar reunião
+        Reuniao::observe(ReuniaoObserver::class);
+
         // P0.4 — Observer de e-mail automático suspenso.
         // O envio síncrono ao criar reunião foi desativado enquanto não existe fluxo
         // formal de convocação, fila transacional e idempotência.

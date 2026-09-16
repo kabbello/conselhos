@@ -367,12 +367,6 @@
                                 default          => ucfirst(strtolower($membro->tipo))
                             } }}
                         </div>
-                        @if($membro->email_exibicao)
-                        <a href="mailto:{{ $membro->email_exibicao }}"
-                           class="text-xs text-blue-500 hover:text-blue-700 transition-colors truncate block">
-                            {{ $membro->email_exibicao }}
-                        </a>
-                        @endif
                     </div>
                 </div>
                 @endforeach

@@ -102,6 +102,24 @@ class ConselhoResource extends Resource
                     ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
                     ->columnSpanFull(),
             ]),
+
+            Forms\Components\Section::make('Notificações automáticas')
+                ->description('Define se o sistema envia avisos automáticos à composição ao criar ou alterar uma reunião.')
+                ->schema([
+                    Forms\Components\Toggle::make('notif_email_ativo')
+                        ->label('Enviar e-mail')
+                        ->helperText('Notifica por e-mail ao criar ou alterar data/local/pauta de uma reunião.')
+                        ->default(true)
+                        ->inline(false),
+
+                    Forms\Components\Toggle::make('notif_whatsapp_ativo')
+                        ->label('Enviar WhatsApp')
+                        ->helperText('Requer que a Evolution API esteja configurada no servidor.')
+                        ->default(false)
+                        ->inline(false),
+                ])
+                ->columns(2)
+                ->collapsible(),
         ]);
     }
 

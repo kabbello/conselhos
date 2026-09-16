@@ -34,10 +34,14 @@ class Conselho extends Model
         'telefone',
         'endereco',
         'ativo',
+        'notif_email_ativo',
+        'notif_whatsapp_ativo',
     ];
 
     protected $casts = [
-        'ativo' => 'boolean',
+        'ativo'                => 'boolean',
+        'notif_email_ativo'    => 'boolean',
+        'notif_whatsapp_ativo' => 'boolean',
     ];
 
     public function getActivitylogOptions(): LogOptions

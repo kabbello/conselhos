@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    // WhatsApp via Evolution API (instância única para toda a plataforma)
+    'evolution' => [
+        'url'      => env('WHATSAPP_API_URL'),
+        'key'      => env('WHATSAPP_API_KEY'),
+        'instance' => env('WHATSAPP_INSTANCE'),
+    ],
+
 ];
