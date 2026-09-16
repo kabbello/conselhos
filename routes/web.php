@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Comissoes\ComissaoReuniaoPresencaPdfController;
+use App\Http\Controllers\Auth\PrimeiroAcessoController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\Reunioes\ListaPresencaPdfController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/comissao-reunioes/{reuniao}/lista-presenca', ComissaoReuniaoPresencaPdfController::class)
         ->name('comissao-reunioes.lista-presenca-pdf');
 });
+
+// Primeiro acesso para conselheiros — sem autenticação
+Route::get('/painel/primeiro-acesso', [PrimeiroAcessoController::class, 'show'])
+    ->name('auth.primeiro-acesso');
+Route::post('/painel/primeiro-acesso', [PrimeiroAcessoController::class, 'store'])
+    ->name('auth.primeiro-acesso');
+Route::post('/painel/primeiro-acesso/email', [PrimeiroAcessoController::class, 'salvarEmail'])
+    ->name('auth.primeiro-acesso.email');
 
 // Portal público — sem autenticação
 Route::prefix('portal')->name('portal.')->group(function () {

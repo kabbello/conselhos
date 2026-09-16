@@ -71,7 +71,9 @@ class PainelPanelProvider extends PanelProvider
             ->default()
             ->id('painel')
             ->path('painel')
-            ->login()
+            ->login(\App\Filament\Painel\Pages\Login::class)
+            ->passwordReset()
+            ->profile(\App\Filament\Painel\Pages\PerfilConselheiro::class)
             ->colors([
                 'primary' => Color::Blue,
             ])
