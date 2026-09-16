@@ -34,6 +34,10 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Slate,
             ])
             ->brandName('Conselhos — Admin')
+            ->renderHook(
+                'panels::footer',
+                fn () => '<div style="text-align:center;padding:8px 0;font-size:11px;color:#94a3b8;">v' . config('app.version') . ' &nbsp;·&nbsp; ' . config('app.name') . '</div>',
+            )
             ->discoverResources(
                 in: app_path('Filament/Admin/Resources'),
                 for: 'App\\Filament\\Admin\\Resources'

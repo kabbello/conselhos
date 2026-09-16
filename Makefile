@@ -1,7 +1,7 @@
 # ─── Conselhos App ───────────────────────────────────────────────────────────
 
 .PHONY: up down restart logs shell test test-filter migrate migrate-fresh seed \
-        tinker horizon queue-work cache-clear
+        tinker horizon queue-work cache-clear deploy deploy-assets deploy-env
 
 # ─── Docker ──────────────────────────────────────────────────────────────────
 
@@ -62,7 +62,7 @@ SERVER  := root@37.60.231.53
 APP_DIR := /opt/conselhos-app
 STACK   := conselhos-app
 
-deploy: ## Deploy completo: pull → build → extrai assets → restart → optimize
+deploy: ## Deploy completo: pull → build → assets → restart → env → migrate → optimize
 	@echo "▶ Pull..."
 	ssh $(SERVER) "git -C $(APP_DIR) pull origin master"
 	@echo "▶ Build..."
@@ -74,6 +74,10 @@ deploy: ## Deploy completo: pull → build → extrai assets → restart → opt
 		docker rm $$TMP'
 	@echo "▶ Restart serviços..."
 	ssh $(SERVER) "docker service update --force $(STACK)_app && docker service update --force $(STACK)_scheduler && docker service update --force $(STACK)_queue"
+	@echo "▶ Sincronizando env vars..."
+	$(MAKE) deploy-env
+	@echo "▶ Migrations..."
+	ssh $(SERVER) 'docker exec $$(docker ps --format "{{.ID}} {{.Names}}" | grep $(STACK)_app | awk "{print \$$1}") php artisan migrate --force'
 	@echo "▶ Optimize..."
 	ssh $(SERVER) 'docker exec $$(docker ps --format "{{.ID}} {{.Names}}" | grep $(STACK)_app | awk "{print \$$1}") php artisan optimize'
 	@echo "✔ Deploy concluído."
@@ -83,6 +87,10 @@ deploy-assets: ## Apenas extrai assets do container atual para o host (sem rebui
 		CONTAINER=$$(docker ps --format "{{.ID}} {{.Names}}" | grep $(STACK)_app | awk "{print \$$1}") && \
 		docker cp $$CONTAINER:/var/www/html/public/build $(APP_DIR)/public/ && \
 		echo "Assets extraídos."'
+
+deploy-env: ## Sincroniza vars críticas do .env para os serviços Swarm (MAIL_*, WHATSAPP_*)
+	@echo "▶ Sync env vars → Swarm..."
+	ssh $(SERVER) "APP_DIR=$(APP_DIR) STACK=$(STACK) sh $(APP_DIR)/scripts/sync-swarm-env.sh"
 
 # ─── Ajuda ───────────────────────────────────────────────────────────────────
 

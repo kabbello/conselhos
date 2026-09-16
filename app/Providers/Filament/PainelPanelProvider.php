@@ -78,6 +78,10 @@ class PainelPanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
             ->brandName('Sistema de Conselhos')
+            ->renderHook(
+                'panels::footer',
+                fn () => '<div style="text-align:center;padding:8px 0;font-size:11px;color:#94a3b8;">v' . config('app.version') . ' &nbsp;·&nbsp; ' . config('app.name') . '</div>',
+            )
             // Multi-tenancy: cada usuário pertence a um município
             ->tenant(Municipio::class, slugAttribute: 'slug')
             ->tenantRoutePrefix('municipio')
