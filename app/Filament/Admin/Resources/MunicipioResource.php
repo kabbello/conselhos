@@ -78,14 +78,24 @@ class MunicipioResource extends Resource
             Forms\Components\Section::make('Identidade Visual')->schema([
                 Forms\Components\FileUpload::make('logo_path')
                     ->label('Logotipo')
-                    ->disk('public')
+                    ->image()
+                    ->disk('r2')
                     ->directory('municipios/logos')
+                    ->visibility('public')
+                    ->maxSize(4096)
+                    ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+                    ->helperText('PNG, JPG ou WEBP. Máx. 4MB.')
                     ->imagePreviewHeight('120'),
 
                 Forms\Components\FileUpload::make('brasao_path')
                     ->label('Brasão / Símbolo')
-                    ->disk('public')
+                    ->image()
+                    ->disk('r2')
                     ->directory('municipios/brasoes')
+                    ->visibility('public')
+                    ->maxSize(4096)
+                    ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+                    ->helperText('PNG, JPG ou WEBP. Máx. 4MB.')
                     ->imagePreviewHeight('120'),
 
                 Forms\Components\ColorPicker::make('cor_primaria')
@@ -160,7 +170,7 @@ class MunicipioResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('logo_path')
                     ->label('Logo')
-                    ->disk('public')
+                    ->disk('r2')
                     ->height(36)
                     ->defaultImageUrl(fn () => null)
                     ->extraImgAttributes(['class' => 'rounded']),
