@@ -641,8 +641,11 @@ class ImportLegacyPeruibe extends Command
             }
 
             $tipoDocId = $this->tipoDocMap[$row->Tipo] ?? null;
-            // C04: ausência de informação nunca significa "público" — entra em revisão
-            $publico   = $row->Publico === null ? false : (bool) $row->Publico;
+            // O portal legado (PHP Maker) exibia TODOS os arquivos publicamente,
+            // independente do campo `Publico` (que era DEFAULT 0 e não controlava acesso).
+            // Portanto, todos os documentos legados são importados como públicos.
+            // Documentos criados manualmente no novo sistema seguem a regra padrão (privado).
+            $publico = true;
 
             $arquivoUrl = ($row->Arquivo && trim($row->Arquivo) !== '')
                 ? $this->urlArquivo(trim($row->Arquivo))
@@ -721,7 +724,7 @@ class ImportLegacyPeruibe extends Command
                     'numero'            => $this->normalizar($row->Numero ?? null, 50),
                     'link'              => $linkFinal,
                     'arquivo_url'       => $arquivoUrl,
-                    'publico'           => isset($row->Publico) ? (bool) $row->Publico : false, // C04: privado por omissão
+                    'publico'           => true, // Portal legado exibia toda legislação publicamente
                     'created_at'        => now(),
                     'updated_at'        => now(),
                 ]);
