@@ -164,20 +164,6 @@
                     </div>
                 </a>
 
-                {{-- Link externo para site da prefeitura --}}
-                @if($municipio->site)
-                    <a href="{{ $municipio->site }}"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       title="Acessar o site oficial da Prefeitura de {{ $municipio->nome }}"
-                       aria-label="Site oficial da Prefeitura de {{ $municipio->nome }} (abre em nova aba)"
-                       class="hidden lg:flex items-center gap-1.5 text-xs text-blue-200 hover:text-white border border-blue-500 hover:border-white rounded-lg px-3 py-1.5 transition-colors ml-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
-                        </svg>
-                        Site da Prefeitura
-                    </a>
-                @endif
             </div>
 
             {{-- Navegação --}}
@@ -187,15 +173,6 @@
                    @yield('nav_conselhos_aria')>
                     Conselhos
                 </a>
-                @if($municipio->site)
-                    <a href="{{ $municipio->site }}"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       class="px-4 py-2 rounded-lg hover:bg-white/15 transition-colors flex items-center gap-1">
-                        Prefeitura
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
-                    </a>
-                @endif
             </nav>
         </div>
 
