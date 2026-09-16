@@ -84,7 +84,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('auth.primeiro-acesso') }}" class="space-y-4">
+                    <form method="POST" action="{{ route('auth.primeiro-acesso.store') }}" class="space-y-4">
                         @csrf
 
                         <div>

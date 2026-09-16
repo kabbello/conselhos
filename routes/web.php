@@ -21,7 +21,7 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/painel/primeiro-acesso', [PrimeiroAcessoController::class, 'show'])
     ->name('auth.primeiro-acesso');
 Route::post('/painel/primeiro-acesso', [PrimeiroAcessoController::class, 'store'])
-    ->name('auth.primeiro-acesso');
+    ->name('auth.primeiro-acesso.store');
 Route::post('/painel/primeiro-acesso/email', [PrimeiroAcessoController::class, 'salvarEmail'])
     ->name('auth.primeiro-acesso.email');
 
