@@ -15,7 +15,7 @@ return new class extends Migration
             $table->boolean('presente')->default(false);
             $table->timestamps();
 
-            $table->unique(['comissao_reuniao_id', 'comissao_membro_id']);
+            $table->unique(['comissao_reuniao_id', 'comissao_membro_id'], 'crp_reuniao_membro_unique');
         });
     }
 
