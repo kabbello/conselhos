@@ -19,18 +19,24 @@ class Reuniao extends Model
 
     protected $fillable = [
         'conselho_id',
+        'numero',
         'tipo_id',
         'created_by',
         'data_hora',
         'local',
         'pauta',
+        'ata_texto',
+        'ata_aprovada',
+        'ata_aprovada_em',
         'observacoes',
         'status',
         'legacy_id',
     ];
 
     protected $casts = [
-        'data_hora' => 'datetime',
+        'data_hora'      => 'datetime',
+        'ata_aprovada'   => 'boolean',
+        'ata_aprovada_em' => 'datetime',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -75,5 +81,10 @@ class Reuniao extends Model
     public function notificacoes(): HasMany
     {
         return $this->hasMany(NotificacaoEnviada::class);
+    }
+
+    public function anexos(): HasMany
+    {
+        return $this->hasMany(ReuniaoAnexo::class);
     }
 }

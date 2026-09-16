@@ -1,9 +1,20 @@
 <?php
 
+use App\Http\Controllers\Comissoes\ComissaoReuniaoPresencaPdfController;
 use App\Http\Controllers\PortalController;
+use App\Http\Controllers\Reunioes\ListaPresencaPdfController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'institucional')->name('institucional');
+
+// Rotas autenticadas
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reunioes/{reuniao}/lista-presenca', ListaPresencaPdfController::class)
+        ->name('reunioes.lista-presenca-pdf');
+
+    Route::get('/comissao-reunioes/{reuniao}/lista-presenca', ComissaoReuniaoPresencaPdfController::class)
+        ->name('comissao-reunioes.lista-presenca-pdf');
+});
 
 // Portal público — sem autenticação
 Route::prefix('portal')->name('portal.')->group(function () {

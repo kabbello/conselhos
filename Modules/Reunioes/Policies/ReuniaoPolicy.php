@@ -55,6 +55,19 @@ class ReuniaoPolicy
             && $this->doMunicipio($user, $reuniao);
     }
 
+    public function gerenciarAnexos(User $user, Reuniao $reuniao): bool
+    {
+        return $user->hasPermissionTo('gerenciar-anexos.reunioes')
+            && $this->doMunicipio($user, $reuniao);
+    }
+
+    public function aprovarAta(User $user, Reuniao $reuniao): bool
+    {
+        return $user->hasPermissionTo('aprovar-ata.reunioes')
+            && $reuniao->isRealizada()
+            && $this->doMunicipio($user, $reuniao);
+    }
+
     // ---------- Helper ----------
 
     /**

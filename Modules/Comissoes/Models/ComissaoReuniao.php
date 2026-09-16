@@ -68,4 +68,9 @@ class ComissaoReuniao extends Model
     {
         return $this->hasMany(ComissaoDocumento::class, 'comissao_reuniao_id');
     }
+
+    public function presencas(): HasMany
+    {
+        return $this->hasMany(ComissaoReuniaoPresenca::class, 'comissao_reuniao_id');
+    }
 }

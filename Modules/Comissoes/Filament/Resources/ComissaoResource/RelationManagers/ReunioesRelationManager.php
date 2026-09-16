@@ -9,13 +9,17 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Modules\Comissoes\Models\ComissaoReuniao;
+use Modules\Comissoes\Models\ComissaoReuniaoPresenca;
 
 class ReunioesRelationManager extends RelationManager
 {
@@ -128,6 +132,58 @@ class ReunioesRelationManager extends RelationManager
             ])
             ->actions([
                 EditAction::make(),
+
+                Action::make('registrar_presencas')
+                    ->label('Presenças')
+                    ->icon('heroicon-o-user-check')
+                    ->color('primary')
+                    ->form(function (ComissaoReuniao $record) {
+                        $membros = $record->comissao->membrosAtivos()->with('composicao')->get();
+
+                        $options = $membros->mapWithKeys(fn ($m) => [$m->id => $m->nome])->toArray();
+
+                        $presencasExistentes = $record->presencas()
+                            ->where('presente', true)
+                            ->pluck('comissao_membro_id')
+                            ->toArray();
+
+                        return [
+                            \Filament\Forms\Components\CheckboxList::make('presentes')
+                                ->label('Marcar presentes')
+                                ->options($options)
+                                ->default($presencasExistentes)
+                                ->columns(2)
+                                ->searchable(),
+                        ];
+                    })
+                    ->action(function (ComissaoReuniao $record, array $data) {
+                        $membros = $record->comissao->membrosAtivos()->pluck('id');
+
+                        foreach ($membros as $membroId) {
+                            ComissaoReuniaoPresenca::updateOrCreate(
+                                [
+                                    'comissao_reuniao_id' => $record->id,
+                                    'comissao_membro_id'  => $membroId,
+                                ],
+                                [
+                                    'presente' => in_array($membroId, $data['presentes'] ?? []),
+                                ]
+                            );
+                        }
+
+                        Notification::make()
+                            ->title('Presenças registradas com sucesso')
+                            ->success()
+                            ->send();
+                    }),
+
+                Action::make('lista_presenca_pdf')
+                    ->label('Lista de Presença')
+                    ->icon('heroicon-o-document-text')
+                    ->color('gray')
+                    ->url(fn (ComissaoReuniao $record) => route('comissao-reunioes.lista-presenca-pdf', $record))
+                    ->openUrlInNewTab(),
+
                 DeleteAction::make(),
             ]);
     }

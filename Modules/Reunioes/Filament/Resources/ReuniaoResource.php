@@ -6,9 +6,11 @@ use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -54,6 +56,12 @@ class ReuniaoResource extends Resource
                     ->where('ativo', true)->orderBy('nome')->pluck('nome', 'id')->all())
                 ->required()->searchable(),
 
+            TextInput::make('numero')
+                ->label('Nº da Reunião')
+                ->numeric()
+                ->minValue(1)
+                ->nullable(),
+
             Select::make('tipo_id')
                 ->label('Tipo de Reunião')
                 ->options(fn () => \Modules\Reunioes\Models\TipoReuniao::orderBy('nome')->pluck('nome', 'id')->all())
@@ -87,6 +95,26 @@ class ReuniaoResource extends Resource
                 ->columnSpanFull()
                 ->label('Pauta / Ordem do Dia')
                 ->helperText('Registre os pontos de pauta antes da reunião'),
+
+            Section::make('Ata da Reunião')
+                ->schema([
+                    RichEditor::make('ata_texto')
+                        ->label('Texto da Ata')
+                        ->helperText('Cole ou redija as anotações para a ata.')
+                        ->columnSpanFull(),
+
+                    Toggle::make('ata_aprovada')
+                        ->label('Ata aprovada')
+                        ->inline(false)
+                        ->live(),
+
+                    DateTimePicker::make('ata_aprovada_em')
+                        ->label('Aprovada em')
+                        ->seconds(false)
+                        ->visible(fn (Forms\Get $get) => $get('ata_aprovada')),
+                ])
+                ->columns(2)
+                ->collapsible(),
         ])->columns(2);
     }
 
@@ -98,6 +126,12 @@ class ReuniaoResource extends Resource
                     ->label('Conselho')
                     ->sortable()
                     ->searchable(),
+
+                TextColumn::make('numero')
+                    ->label('Nº')
+                    ->alignCenter()
+                    ->sortable()
+                    ->placeholder('—'),
 
                 TextColumn::make('tipoReuniao.nome')
                     ->label('Tipo')
@@ -156,7 +190,55 @@ class ReuniaoResource extends Resource
             ->defaultSort('data_hora', 'desc')
             ->actions([
                 EditAction::make(),
-                DeleteAction::make(),
+
+                Tables\Actions\Action::make('lista_presenca_pdf')
+                    ->label('Lista de Presença')
+                    ->icon('heroicon-o-document-text')
+                    ->color('gray')
+                    ->url(fn (Reuniao $record) => route('reunioes.lista-presenca-pdf', $record))
+                    ->openUrlInNewTab(),
+
+                Tables\Actions\Action::make('realizar')
+                    ->label('Realizar Reunião')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(fn (Reuniao $record) => $record->status === 'agendada')
+                    ->requiresConfirmation()
+                    ->modalDescription('Confirma a realização desta reunião? O status será alterado para "Realizada".')
+                    ->action(function (Reuniao $record) {
+                        $record->update(['status' => 'realizada']);
+                        Notification::make()->title('Reunião marcada como realizada')->success()->send();
+                    }),
+
+                Tables\Actions\Action::make('cancelar')
+                    ->label('Cancelar Reunião')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn (Reuniao $record) => $record->status === 'agendada')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cancelar Reunião')
+                    ->modalDescription('Tem certeza que deseja cancelar esta reunião? Esta ação não poderá ser desfeita.')
+                    ->modalSubmitActionLabel('Sim, cancelar')
+                    ->action(function (Reuniao $record) {
+                        $record->update(['status' => 'cancelada']);
+                        Notification::make()->title('Reunião cancelada')->warning()->send();
+                    }),
+
+                Tables\Actions\Action::make('aprovar_ata')
+                    ->label('Aprovar Ata')
+                    ->icon('heroicon-o-document-check')
+                    ->color('info')
+                    ->visible(fn (Reuniao $record) => $record->status === 'realizada' && ! $record->ata_aprovada)
+                    ->requiresConfirmation()
+                    ->modalDescription('Confirma a aprovação da ata desta reunião?')
+                    ->action(function (Reuniao $record) {
+                        $record->update([
+                            'ata_aprovada'    => true,
+                            'ata_aprovada_em' => now(),
+                        ]);
+                        Notification::make()->title('Ata aprovada com sucesso')->success()->send();
+                    }),
+
                 Tables\Actions\Action::make('notificar')
                     ->label('Notificar')
                     ->icon('heroicon-o-bell')
@@ -181,6 +263,8 @@ class ReuniaoResource extends Resource
                         $msg = "Enviados: {$resultado['enviados']} | Sem e-mail: {$resultado['sem_email']} | Erros: {$resultado['erros']}";
                         Notification::make()->title('Notificação enviada')->body($msg)->success()->send();
                     }),
+
+                DeleteAction::make(),
             ]);
     }
 
@@ -188,6 +272,7 @@ class ReuniaoResource extends Resource
     {
         return [
             ReuniaoResource\RelationManagers\PresencasRelationManager::class,
+            ReuniaoResource\RelationManagers\AnexosRelationManager::class,
             ReuniaoResource\RelationManagers\LinksRelationManager::class,
             ReuniaoResource\RelationManagers\NotificacoesRelationManager::class,
         ];
