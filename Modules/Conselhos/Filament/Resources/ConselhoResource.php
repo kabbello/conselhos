@@ -39,6 +39,18 @@ class ConselhoResource extends Resource
     {
         return $form->schema([
             Forms\Components\Section::make('Identificação')->schema([
+                Forms\Components\FileUpload::make('logo_url')
+                    ->label('Logotipo')
+                    ->image()
+                    ->disk('r2')
+                    ->directory('conselhos/logos')
+                    ->visibility('public')
+                    ->maxSize(2048)
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'])
+                    ->helperText('PNG, JPG, WEBP ou SVG. Máx. 2 MB. Recomendado: fundo transparente.')
+                    ->imagePreviewHeight('80')
+                    ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('nome')
                     ->label('Nome do conselho')
                     ->required()
