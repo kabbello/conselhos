@@ -173,6 +173,15 @@
                    @yield('nav_conselhos_aria')>
                     Conselhos
                 </a>
+
+                <a href="{{ url('/painel') }}"
+                   class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/30 hover:bg-white/15 hover:border-white/60 transition-colors text-sm ml-2"
+                   aria-label="Acesso restrito — área dos gestores">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                    </svg>
+                    Acesso restrito
+                </a>
             </nav>
         </div>
 
