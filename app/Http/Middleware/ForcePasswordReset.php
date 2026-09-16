@@ -25,6 +25,12 @@ class ForcePasswordReset
     {
         $user = $request->user();
 
+        // Durante impersonation o admin não deve ser bloqueado pelo reset de senha
+        // do usuário impersonado — ele está acessando para suporte, não como o usuário real.
+        if (app('impersonate')->isImpersonating()) {
+            return $next($request);
+        }
+
         if ($user && $user->must_reset_password && ! $this->isRotaPermitida($request)) {
             // Redireciona para a página de perfil do Filament onde a senha pode ser alterada.
             // O painel usa multi-tenancy; a URL exata inclui o slug do município.
