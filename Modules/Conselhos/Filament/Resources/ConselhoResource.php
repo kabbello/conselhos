@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Modules\Composicao\Filament\Resources\ComposicaoResource;
 use Modules\Conselhos\Filament\Resources\ConselhoResource\Pages;
@@ -182,41 +183,126 @@ class ConselhoResource extends Resource
                     ->label('Gestores')
                     ->icon('heroicon-o-shield-check')
                     ->color('warning')
-                    ->authorize(fn () => auth()->user()->hasAnyRole(['admin_municipal', 'super_admin'])
-                        || auth()->user()->hasRole('gestor_conselho'))
+                    ->authorize(function (Conselho $record) {
+                        $user = auth()->user();
+                        if ($user->hasAnyRole(['admin_municipal', 'super_admin'])) {
+                            return true;
+                        }
+                        // Presidente do conselho é gestor natural — pode atribuir outros gestores
+                        return $record->composicao()
+                            ->whereHas('conselheiro', fn ($q) => $q->where('user_id', $user->id))
+                            ->where('tipo', 'PRESIDENTE')
+                            ->where('ativo', true)
+                            ->whereNull('deleted_at')
+                            ->exists();
+                    })
                     ->modalHeading(fn (Conselho $record) => "Gestores — {$record->sigla}")
-                    ->modalDescription('Usuários com papel gestor_conselho atribuído a este conselho. Não é necessário ser membro da composição.')
+                    ->modalDescription('Gerencie quem pode administrar este conselho. Gestores não precisam ser membros da composição.')
+                    ->modalWidth('2xl')
                     ->form(fn (Conselho $record) => [
+                        // Painel de gestores atuais
+                        Forms\Components\Placeholder::make('gestores_atuais')
+                            ->label('Gestores ativos')
+                            ->content(function () use ($record) {
+                                $gestores = $record->gestoresUsuarios()->get();
+
+                                // Gestor natural: presidente com user_id vinculado
+                                $presidente = $record->composicao()
+                                    ->with('conselheiro.user')
+                                    ->where('tipo', 'PRESIDENTE')
+                                    ->where('ativo', true)
+                                    ->whereNull('deleted_at')
+                                    ->first();
+
+                                $linhas = [];
+
+                                if ($presidente?->conselheiro?->user) {
+                                    $linhas[] = "⭐ {$presidente->conselheiro->user->name} (Presidente — gestor natural)";
+                                }
+
+                                foreach ($gestores as $g) {
+                                    $linhas[] = "✓ {$g->name}";
+                                }
+
+                                return $linhas ? implode("\n", $linhas) : '— nenhum gestor atribuído';
+                            }),
+
+                        Forms\Components\Radio::make('modo')
+                            ->label('Adicionar gestor')
+                            ->options([
+                                'existente' => 'Usuário já cadastrado no município',
+                                'externo'   => 'Novo usuário externo (criar conta)',
+                            ])
+                            ->default('existente')
+                            ->live()
+                            ->inline(),
+
+                        // --- Usuário existente ---
                         Forms\Components\Select::make('user_id')
-                            ->label('Atribuir gestor')
-                            ->placeholder('Selecione um usuário do município...')
+                            ->label('Selecionar usuário')
+                            ->placeholder('Digite para buscar...')
                             ->options(
                                 User::where('municipio_id', Filament::getTenant()->id)
                                     ->whereDoesntHave('roles', fn ($q) => $q->where('name', 'super_admin'))
                                     ->orderBy('name')
                                     ->pluck('name', 'id')
                             )
+                            ->preload()
                             ->searchable()
                             ->nullable()
+                            ->visible(fn (Forms\Get $get) => $get('modo') === 'existente')
                             ->helperText('Deixe em branco para apenas visualizar os gestores atuais.'),
 
-                        Forms\Components\Placeholder::make('gestores_atuais')
-                            ->label('Gestores ativos')
-                            ->content(function () use ($record) {
-                                $lista = $record->gestoresUsuarios()->pluck('name')->join(', ');
-                                return $lista ?: '— nenhum gestor atribuído';
-                            }),
+                        // --- Usuário externo ---
+                        Forms\Components\TextInput::make('ext_nome')
+                            ->label('Nome completo')
+                            ->maxLength(255)
+                            ->visible(fn (Forms\Get $get) => $get('modo') === 'externo'),
+
+                        Forms\Components\TextInput::make('ext_email')
+                            ->label('E-mail')
+                            ->email()
+                            ->maxLength(255)
+                            ->unique(User::class, 'email')
+                            ->visible(fn (Forms\Get $get) => $get('modo') === 'externo'),
+
+                        Forms\Components\TextInput::make('ext_senha')
+                            ->label('Senha inicial')
+                            ->password()
+                            ->revealable()
+                            ->minLength(8)
+                            ->visible(fn (Forms\Get $get) => $get('modo') === 'externo')
+                            ->helperText('O usuário deverá redefinir esta senha no primeiro acesso.'),
                     ])
                     ->action(function (Conselho $record, array $data) {
-                        if (empty($data['user_id'])) {
-                            return;
+                        $municipioId = Filament::getTenant()->id;
+
+                        if ($data['modo'] === 'externo') {
+                            // Validação mínima
+                            if (empty($data['ext_nome']) || empty($data['ext_email']) || empty($data['ext_senha'])) {
+                                Notification::make()->title('Preencha nome, e-mail e senha para criar um usuário externo.')->warning()->send();
+                                return;
+                            }
+
+                            $user = User::create([
+                                'municipio_id'        => $municipioId,
+                                'name'                => $data['ext_nome'],
+                                'email'               => $data['ext_email'],
+                                'password'            => Hash::make($data['ext_senha']),
+                                'must_reset_password' => true,
+                            ]);
+                        } else {
+                            if (empty($data['user_id'])) {
+                                return; // Só visualização
+                            }
+                            $user = User::find((int) $data['user_id']);
                         }
 
-                        $userId = (int) $data['user_id'];
+                        if (! $user) return;
 
                         DB::table('user_conselho_gestores')->upsert(
                             [
-                                'user_id'       => $userId,
+                                'user_id'       => $user->id,
                                 'conselho_id'   => $record->id,
                                 'atribuido_por' => auth()->id(),
                                 'atribuido_em'  => now(),
@@ -226,21 +312,20 @@ class ConselhoResource extends Resource
                             ['atribuido_por', 'atribuido_em', 'revogado_em'],
                         );
 
-                        // Garante que o usuário tem o papel gestor_conselho
-                        $user = User::find($userId);
-                        if ($user && ! $user->hasRole('gestor_conselho')) {
+                        if (! $user->hasRole('gestor_conselho')) {
                             $user->assignRole('gestor_conselho');
                         }
 
                         activity('gestores-conselho')
                             ->causedBy(auth()->user())
                             ->performedOn($record)
-                            ->withProperties(['user_id' => $userId, 'user_name' => $user?->name])
+                            ->withProperties(['user_id' => $user->id, 'user_name' => $user->name])
                             ->event('gestor_atribuido')
-                            ->log("Gestor {$user?->name} atribuído ao conselho {$record->sigla}");
+                            ->log("Gestor {$user->name} atribuído ao conselho {$record->sigla}");
 
                         Notification::make()
                             ->title('Gestor atribuído com sucesso.')
+                            ->body($user->name)
                             ->success()
                             ->send();
                     }),
@@ -249,13 +334,23 @@ class ConselhoResource extends Resource
                     ->label('Revogar gestor')
                     ->icon('heroicon-o-shield-exclamation')
                     ->color('danger')
-                    ->authorize(fn () => auth()->user()->hasAnyRole(['admin_municipal', 'super_admin']))
+                    ->authorize(function (Conselho $record) {
+                        $user = auth()->user();
+                        if ($user->hasAnyRole(['admin_municipal', 'super_admin'])) return true;
+                        return $record->composicao()
+                            ->whereHas('conselheiro', fn ($q) => $q->where('user_id', $user->id))
+                            ->where('tipo', 'PRESIDENTE')
+                            ->where('ativo', true)
+                            ->whereNull('deleted_at')
+                            ->exists();
+                    })
                     ->form(fn (Conselho $record) => [
                         Forms\Components\Select::make('user_id')
                             ->label('Gestor a revogar')
                             ->options(
                                 $record->gestoresUsuarios()->pluck('users.name', 'users.id')
                             )
+                            ->preload()
                             ->required()
                             ->searchable(),
                     ])
@@ -268,7 +363,6 @@ class ConselhoResource extends Resource
 
                         $user = User::find($data['user_id']);
 
-                        // Remove o papel se o usuário não gerencia mais nenhum conselho
                         if ($user && $user->conselhosSobGestao()->doesntExist()) {
                             $user->removeRole('gestor_conselho');
                         }
@@ -280,10 +374,7 @@ class ConselhoResource extends Resource
                             ->event('gestor_revogado')
                             ->log("Gestor {$user?->name} revogado do conselho {$record->sigla}");
 
-                        Notification::make()
-                            ->title('Gestor revogado com sucesso.')
-                            ->success()
-                            ->send();
+                        Notification::make()->title('Gestor revogado.')->success()->send();
                     }),
 
                 Tables\Actions\EditAction::make(),
