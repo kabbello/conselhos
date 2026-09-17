@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AjudaController;
 use App\Http\Controllers\Comissoes\ComissaoReuniaoPresencaPdfController;
 use App\Http\Controllers\Auth\PrimeiroAcessoController;
 use App\Http\Controllers\PortalController;
@@ -22,6 +23,12 @@ Route::get('/painel/primeiro-acesso', [PrimeiroAcessoController::class, 'show'])
     ->name('auth.primeiro-acesso');
 Route::post('/painel/primeiro-acesso', [PrimeiroAcessoController::class, 'store'])
     ->name('auth.primeiro-acesso.store');
+
+// Central de ajuda — sem autenticação
+Route::prefix('ajuda')->name('ajuda.')->group(function () {
+    Route::get('/', [AjudaController::class, 'index'])->name('index');
+    Route::get('/{secao}/{topico}', [AjudaController::class, 'topico'])->name('topico');
+});
 
 // Portal público — sem autenticação
 Route::prefix('portal')->name('portal.')->group(function () {
