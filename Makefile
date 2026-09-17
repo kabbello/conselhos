@@ -62,30 +62,34 @@ SERVER  := root@37.60.231.53
 APP_DIR := /opt/conselhos-app
 STACK   := conselhos-app
 
-deploy: ## Deploy completo: pull → build → assets → restart → env → migrate → optimize
-	@echo "▶ Pull..."
-	ssh $(SERVER) "git -C $(APP_DIR) pull origin master"
-	@echo "▶ Build..."
+deploy: ## Deploy completo: pull → build → assets → stack deploy → migrate → optimize
+	@echo "▶ Pull (reset hard para evitar conflitos com public/build e afins)..."
+	ssh $(SERVER) "git -C $(APP_DIR) fetch origin master && git -C $(APP_DIR) reset --hard origin/master"
+	@echo "▶ Build da imagem..."
 	ssh $(SERVER) "docker build -f $(APP_DIR)/docker/Dockerfile -t $(STACK):latest $(APP_DIR)"
-	@echo "▶ Extrai assets para o host..."
+	@echo "▶ Extrai assets compilados da imagem para o host (necessário para o volume do Nginx)..."
 	ssh $(SERVER) '\
 		TMP=$$(docker create $(STACK):latest) && \
-		docker cp $$TMP:/var/www/html/public/build $(APP_DIR)/public/ && \
+		rm -rf $(APP_DIR)/public/build && \
+		docker cp $$TMP:/var/www/html/public/build $(APP_DIR)/public/build && \
 		docker rm $$TMP'
-	@echo "▶ Restart serviços..."
-	ssh $(SERVER) "docker service update --force $(STACK)_app && docker service update --force $(STACK)_scheduler && docker service update --force $(STACK)_queue"
-	@echo "▶ Sincronizando env vars..."
-	$(MAKE) deploy-env
+	@echo "▶ Deploy do stack Swarm..."
+	ssh $(SERVER) "docker stack deploy -c $(APP_DIR)/docker-compose.prod.yml $(STACK)"
+	@echo "▶ Aguarda o container app subir..."
+	ssh $(SERVER) 'for i in $$(seq 1 20); do \
+		docker ps --format "{{.Names}}" | grep -q $(STACK)_app && break; \
+		sleep 2; \
+	done; sleep 3'
 	@echo "▶ Migrations..."
-	ssh $(SERVER) 'docker exec $$(docker ps --format "{{.ID}} {{.Names}}" | grep $(STACK)_app | awk "{print \$$1}") php artisan migrate --force'
+	ssh $(SERVER) 'docker exec $$(docker ps -qf name=$(STACK)_app) php artisan migrate --force'
 	@echo "▶ Optimize..."
-	ssh $(SERVER) 'docker exec $$(docker ps --format "{{.ID}} {{.Names}}" | grep $(STACK)_app | awk "{print \$$1}") php artisan optimize'
+	ssh $(SERVER) 'docker exec $$(docker ps -qf name=$(STACK)_app) php artisan optimize'
 	@echo "✔ Deploy concluído."
 
-deploy-assets: ## Apenas extrai assets do container atual para o host (sem rebuild)
+deploy-assets: ## Apenas extrai assets do container em execução para o host (sem rebuild)
 	ssh $(SERVER) '\
-		CONTAINER=$$(docker ps --format "{{.ID}} {{.Names}}" | grep $(STACK)_app | awk "{print \$$1}") && \
-		docker cp $$CONTAINER:/var/www/html/public/build $(APP_DIR)/public/ && \
+		rm -rf $(APP_DIR)/public/build && \
+		docker cp $$(docker ps -qf name=$(STACK)_app):/var/www/html/public/build $(APP_DIR)/public/build && \
 		echo "Assets extraídos."'
 
 deploy-env: ## Sincroniza vars críticas do .env para os serviços Swarm (MAIL_*, WHATSAPP_*)
