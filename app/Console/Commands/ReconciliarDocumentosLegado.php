@@ -175,15 +175,17 @@ class ReconciliarDocumentosLegado extends Command
 
         // ── Resumo final ─────────────────────────────────────────────────────
         $this->info('=== RESUMO ===');
-        $this->table(
-            ['Ação', 'Contagem'],
-            [
-                ['Docs legados privados (candidatos a publicar)', $totalPublicar],
-                ['Docs faltantes estimados', $totalFaltantes],
-                $this->option('publicar') ? ['Docs publicados nesta execução', $publicados] : null,
-                $this->option('importar-faltantes') ? ['Docs importados nesta execução', $importados] : null,
-            ]
-        );
+        $tableRows = [
+            ['Docs legados privados (candidatos a publicar)', $totalPublicar],
+            ['Docs faltantes estimados', $totalFaltantes],
+        ];
+        if ($this->option('publicar')) {
+            $tableRows[] = ['Docs publicados nesta execução', $publicados];
+        }
+        if ($this->option('importar-faltantes')) {
+            $tableRows[] = ['Docs importados nesta execução', $importados];
+        }
+        $this->table(['Ação', 'Contagem'], $tableRows);
 
         if ($this->dryRun && ($totalPublicar > 0 || $totalFaltantes > 0)) {
             $this->newLine();
