@@ -75,11 +75,15 @@ deploy: ## Deploy completo: pull → build → assets → stack deploy → migra
 		docker rm $$TMP'
 	@echo "▶ Deploy do stack Swarm..."
 	ssh $(SERVER) "docker stack deploy -c $(APP_DIR)/docker-compose.prod.yml $(STACK)"
+	@echo "▶ Força rollover dos serviços para usar nova imagem..."
+	ssh $(SERVER) "docker service update --force $(STACK)_app; \
+		docker service update --force $(STACK)_queue; \
+		docker service update --force $(STACK)_scheduler"
 	@echo "▶ Aguarda o container app subir..."
-	ssh $(SERVER) 'for i in $$(seq 1 20); do \
+	ssh $(SERVER) 'for i in $$(seq 1 30); do \
 		docker ps --format "{{.Names}}" | grep -q $(STACK)_app && break; \
 		sleep 2; \
-	done; sleep 3'
+	done; sleep 5'
 	@echo "▶ Migrations..."
 	ssh $(SERVER) 'docker exec $$(docker ps -qf name=$(STACK)_app) php artisan migrate --force'
 	@echo "▶ Optimize..."
