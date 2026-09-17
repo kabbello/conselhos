@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ReportarErro;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Modules\Municipios\Models\Municipio;
 use Modules\Conselhos\Models\Conselho;
 
@@ -72,7 +74,9 @@ class PortalController extends Controller
             ->where('status', 'realizada')
             ->orderByDesc('data_hora')->limit(5)->get();
 
-        $totalReunioesRealizadas = $conselho->reunioes()->where('status', 'realizada')->count();
+        $totalReunioesRealizadas  = $conselho->reunioes()->where('status', 'realizada')->count();
+        $totalReunioesAgendadas   = $conselho->reunioes()
+            ->where('status', 'agendada')->where('data_hora', '>=', now())->count();
 
         $atosNormativos = $conselho->atosNormativos()
             ->where('publicado', true)->whereIn('status', ['VIGENTE', 'APROVADO'])
@@ -97,7 +101,8 @@ class PortalController extends Controller
 
         return view('portal.conselho', compact(
             'municipio', 'conselho', 'gestores', 'membros',
-            'reunioesAgendadas', 'reunioesRealizadas', 'totalReunioesRealizadas',
+            'reunioesAgendadas', 'reunioesRealizadas',
+            'totalReunioesRealizadas', 'totalReunioesAgendadas',
             'atosNormativos', 'totalAtosNormativos',
             'documentos', 'totalDocumentos',
             'legislacao', 'totalLegislacao',
@@ -196,6 +201,30 @@ class PortalController extends Controller
         $secao  = 'reunioes';
 
         return view('portal.lista', compact('municipio', 'conselho', 'reunioes', 'titulo', 'secao', 'busca', 'status'));
+    }
+
+    // ── Formulário de reporte de erro ────────────────────────────────────────
+
+    public function reportarErro(Request $request, string $municipio)
+    {
+        $municipio = $this->resolveMunicipio($municipio);
+
+        $data = $request->validate([
+            'pagina'    => ['required', 'url', 'max:500'],
+            'descricao' => ['required', 'string', 'min:10', 'max:2000'],
+            'nome'      => ['nullable', 'string', 'max:255'],
+            'email'     => ['nullable', 'email', 'max:255'],
+        ]);
+
+        Mail::to('kabbello@hotmail.com')->send(new ReportarErro(
+            municipio:      $municipio->nome,
+            pagina:         $data['pagina'],
+            descricao:      $data['descricao'],
+            nomeRemetente:  $data['nome'] ?? null,
+            emailRemetente: $data['email'] ?? null,
+        ));
+
+        return response()->json(['ok' => true]);
     }
 
     // ── Atos Normativos paginados ─────────────────────────────────────────────

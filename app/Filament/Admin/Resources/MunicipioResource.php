@@ -116,14 +116,28 @@ class MunicipioResource extends Resource
                 Forms\Components\TextInput::make('telefone')
                     ->label('Telefone')
                     ->tel()
-                    ->maxLength(20)
+                    ->maxLength(50)
                     ->placeholder('(13) 3456-7890'),
 
                 Forms\Components\TextInput::make('site')
-                    ->label('Site oficial')
+                    ->label('Site oficial da Prefeitura')
                     ->url()
                     ->maxLength(255)
                     ->placeholder('https://www.peruibe.sp.gov.br'),
+
+                Forms\Components\TextInput::make('link_transparencia')
+                    ->label('URL — Portal de Transparência')
+                    ->url()
+                    ->maxLength(500)
+                    ->placeholder('https://peruibe.sp.gov.br/transparencia')
+                    ->helperText('Exibido no rodapé do portal como "Portal de Transparência Municipal".'),
+
+                Forms\Components\TextInput::make('link_ouvidoria')
+                    ->label('URL — Ouvidoria Municipal')
+                    ->url()
+                    ->maxLength(500)
+                    ->placeholder('https://peruibe.sp.gov.br/ouvidoria')
+                    ->helperText('Exibido no rodapé quando preenchido.'),
             ])->columns(3),
 
             Forms\Components\Section::make('Endereço')->schema([
@@ -335,6 +349,13 @@ class MunicipioResource extends Resource
                 ]),
             ])
             ->defaultSort('nome');
+    }
+
+    public static function getRelationManagers(): array
+    {
+        return [
+            MunicipioResource\RelationManagers\UsuariosRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

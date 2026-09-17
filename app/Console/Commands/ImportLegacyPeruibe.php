@@ -317,7 +317,7 @@ class ImportLegacyPeruibe extends Command
                     'legacy_id'    => $row->id_conselheiro,
                     'nome'         => $row->nome,
                     'email'        => $email,
-                    'telefone'     => $this->normalizar($row->Telefone ?? null, 20),
+                    'telefone'     => $this->normalizar($row->Telefone ?? null, 50),
                     'ativo'        => (bool) ($row->ativo ?? true),
                     'created_at'   => $row->criado_em ?? now(),
                     'updated_at'   => $row->atualizado_em ?? now(),
@@ -381,7 +381,7 @@ class ImportLegacyPeruibe extends Command
                     'tipo'         => 'Municipal',
                     'descricao'    => $descricao,
                     'email'        => $this->normalizar($row->Email, 255),
-                    'telefone'     => $this->normalizar($row->Telefone ?? null, 20),
+                    'telefone'     => $this->normalizar($row->Telefone ?? null, 50),
                     'endereco'     => $this->normalizar($row->Endereco ?? null, 255),
                     'ativo'        => (bool) $row->Ativo,
                     'logo_url'     => $logoUrl,
@@ -700,13 +700,18 @@ class ImportLegacyPeruibe extends Command
                 continue;
             }
 
-            $tipoNome = $tiposLeg[$row->Tipo] ?? 'Lei';
+            // Quando Tipo é NULL no legado, não atribuímos um tipo por suposição.
+            // O fallback anterior era 'Lei', o que classificava incorretamente
+            // documentos como "DOCUMENTAÇÃO CMAS 2024/2025" como legislação.
+            $tipoNome = isset($row->Tipo) ? ($tiposLeg[$row->Tipo] ?? null) : null;
 
-            // Busca ou cria tipo_legislacao
-            $tipoLegId = DB::table('tipos_legislacao')
-                ->where('municipio_id', $this->municipioId)
-                ->where('nome', $tipoNome)
-                ->value('id');
+            // Busca tipo_legislacao apenas quando o tipo é conhecido
+            $tipoLegId = $tipoNome
+                ? DB::table('tipos_legislacao')
+                    ->where('municipio_id', $this->municipioId)
+                    ->where('nome', $tipoNome)
+                    ->value('id')
+                : null;
 
             $arquivoUrl = ($row->Arquivo && trim($row->Arquivo) !== '')
                 ? $this->urlLei(trim($row->Arquivo))
@@ -725,6 +730,7 @@ class ImportLegacyPeruibe extends Command
                     'link'              => $linkFinal,
                     'arquivo_url'       => $arquivoUrl,
                     'publico'           => true, // Portal legado exibia toda legislação publicamente
+                    'legacy_id'         => $row->id,
                     'created_at'        => now(),
                     'updated_at'        => now(),
                 ]);

@@ -33,6 +33,8 @@ class Municipio extends Model implements HasName
         'area_km2',
         'cor_primaria',
         'descricao',
+        'link_transparencia',
+        'link_ouvidoria',
         'ativo',
     ];
 

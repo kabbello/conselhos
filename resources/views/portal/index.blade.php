@@ -49,6 +49,22 @@
 {{-- ── Grid de cards ────────────────────────────────────────────────────── --}}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
+    @if($conselhos->isNotEmpty())
+    {{-- Busca de conselho --}}
+    <div class="mb-8">
+        <div class="relative max-w-md">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="search" id="busca-conselho"
+                   placeholder="Buscar conselho por nome ou sigla..."
+                   aria-label="Buscar conselho"
+                   class="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+        </div>
+        <p id="busca-sem-resultado" class="hidden mt-4 text-sm text-slate-500">Nenhum conselho encontrado para esta busca.</p>
+    </div>
+    @endif
+
     @if($conselhos->isEmpty())
         <div class="text-center py-20 text-slate-500">
             <svg class="mx-auto h-14 w-14 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,14 +79,17 @@
     @foreach($conselhos->groupBy('tipo') as $tipo => $grupo)
 
         @if($conselhos->groupBy('tipo')->count() > 1)
-        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 mt-10 first:mt-0 border-b border-slate-200 pb-2">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 mt-10 first:mt-0 border-b border-slate-200 pb-2"
+            data-grupo="{{ $tipo ?: 'Outros' }}">
             {{ $tipo ?: 'Outros' }}
         </h2>
         @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             @foreach($grupo as $conselho)
-            <article class="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group">
+            <article class="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group"
+                     data-busca="{{ strtolower($conselho->nome . ' ' . ($conselho->sigla ?? '')) }}"
+                     data-grupo="{{ $tipo ?: 'Outros' }}">
 
                 {{-- Faixa colorida superior por tipo --}}
                 <div class="h-1.5 {{ $loop->parent->index % 5 === 0 ? 'bg-blue-500' : ($loop->parent->index % 5 === 1 ? 'bg-emerald-500' : ($loop->parent->index % 5 === 2 ? 'bg-violet-500' : ($loop->parent->index % 5 === 3 ? 'bg-amber-500' : 'bg-rose-500'))) }}"></div>
@@ -143,7 +162,7 @@
                     {{-- Contato --}}
                     @if($conselho->email || $conselho->telefone)
                     <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-3 text-xs text-slate-500">
-                        @if($conselho->email)
+                        @if($conselho->email && filter_var($conselho->email, FILTER_VALIDATE_EMAIL))
                         <a href="mailto:{{ $conselho->email }}"
                            class="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,3 +206,35 @@
 </section>
 
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    var input = document.getElementById('busca-conselho');
+    if (!input) return;
+    var semResultado = document.getElementById('busca-sem-resultado');
+
+    input.addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        var cards = document.querySelectorAll('article[data-busca]');
+        var visiveis = 0;
+
+        cards.forEach(function (card) {
+            var match = !q || card.dataset.busca.includes(q);
+            card.style.display = match ? '' : 'none';
+            if (match) visiveis++;
+        });
+
+        // Esconde/mostra cabeçalhos de grupo quando todos os cards do grupo estão ocultos
+        document.querySelectorAll('h2[data-grupo]').forEach(function (h2) {
+            var grupo = h2.dataset.grupo;
+            var temVisivel = Array.from(document.querySelectorAll('article[data-grupo="' + grupo + '"]'))
+                .some(function (a) { return a.style.display !== 'none'; });
+            h2.style.display = temVisivel ? '' : 'none';
+        });
+
+        if (semResultado) semResultado.classList.toggle('hidden', visiveis > 0 || !q);
+    });
+})();
+</script>
+@endpush

@@ -33,4 +33,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::get('/{municipio}/{conselho}/legislacao', [PortalController::class, 'legislacao'])->name('legislacao');
     Route::get('/{municipio}/{conselho}/reunioes', [PortalController::class, 'reunioes'])->name('reunioes');
     Route::get('/{municipio}/{conselho}/atos-normativos', [PortalController::class, 'atosNormativos'])->name('atos-normativos');
+
+    // Formulário de reporte de erro
+    Route::post('/{municipio}/reportar-erro', [PortalController::class, 'reportarErro'])->name('reportar-erro');
 });

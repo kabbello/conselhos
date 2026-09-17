@@ -58,9 +58,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     {
         return match ($panel->getId()) {
             'admin'  => $this->hasRole('super_admin'),
-            // No painel municipal: qualquer usuário vinculado a um município pode entrar.
+            // No painel municipal: usuários vinculados a um município, ou super_admin.
             // O acesso granular por conselho é controlado pelas Policies, não aqui.
-            'painel' => $this->municipio_id !== null,
+            'painel' => $this->municipio_id !== null || $this->hasRole('super_admin'),
             default  => false,
         };
     }

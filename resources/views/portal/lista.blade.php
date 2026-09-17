@@ -210,7 +210,17 @@
                     </div>
                     @endif
                     @if($reuniao->pauta)
-                    <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">{{ Str::limit($reuniao->pauta, 200) }}</p>
+                    @php $pautaLonga = mb_strlen($reuniao->pauta) > 200 @endphp
+                    @if($pautaLonga)
+                    <details class="mt-1.5 text-xs text-slate-600 leading-relaxed">
+                        <summary class="cursor-pointer list-none">
+                            {{ Str::limit($reuniao->pauta, 200) }}<span class="text-blue-500 ml-1">ver mais</span>
+                        </summary>
+                        <p class="mt-1 whitespace-pre-line">{{ $reuniao->pauta }}</p>
+                    </details>
+                    @else
+                    <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">{{ $reuniao->pauta }}</p>
+                    @endif
                     @endif
                     @if($reuniao->links->isNotEmpty())
                     <div class="mt-2 flex flex-wrap gap-2">
