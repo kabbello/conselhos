@@ -5,6 +5,46 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [0.3.0] — 2026-09-17
+
+### Adicionado
+
+#### Central de Ajuda (`/ajuda`)
+- `AjudaController`: lê arquivos Markdown de `resources/help/`, faz parse de frontmatter YAML e renderiza HTML sem dependência externa
+- Busca client-side indexando todos os tópicos automaticamente
+- 3 views: `ajuda/layout.blade.php` (barra de busca global), `ajuda/index.blade.php` (cards por seção), `ajuda/topico.blade.php` (artigo com sidebar + navegação anterior/próximo)
+- 18 tópicos de ajuda em `resources/help/`:
+  - **Portal Público**: documentos, reuniões, reportar erro
+  - **Conselheiro**: primeiro acesso, o que posso fazer, minha senha
+  - **Gestão do Conselho**: composição, reuniões, documentos, atos normativos, comissões, processos, notificações
+  - **Administração Municipal**: usuários, auditoria, configurações
+  - **LGPD**: solicitações de titulares, registro de tratamento
+- Rotas `/ajuda` e `/ajuda/{secao}/{topico}` adicionadas a `routes/web.php`
+- Link "Central de Ajuda" no rodapé do portal público
+- Link "Central de Ajuda" no menu lateral do painel (grupo Suporte, abre em nova aba)
+
+#### Formulário "Reportar erro" no portal
+- Modal nativo `<dialog>` com form (nome opcional, e-mail opcional, descrição obrigatória)
+- Envio via Fetch API sem recarregar a página; feedback inline de sucesso/erro
+- `ReportarErro` Mailable + view `mail/reportar-erro.blade.php`
+- Rota `POST /{municipio}/reportar-erro` encaminha para `kabbello@hotmail.com`
+- Botão na barra de acessibilidade substituído de `mailto:` para abertura do modal
+
+#### Melhorias no portal público
+- Descrição do conselho com `nl2br` para preservar quebras de linha
+- Validação de e-mail com `filter_var(FILTER_VALIDATE_EMAIL)` antes de exibir
+- Pauta expandível via `<details>`/`<summary>` nas listas de reuniões
+- Busca client-side de conselhos com filtro por tipo na página inicial
+- Links de Transparência e Ouvidoria municipais configuráveis (`link_transparencia`, `link_ouvidoria`) no cadastro do município
+
+### Corrigido
+- E-mails com domínio `@*.perui.be` (inexistentes) anulados via comando `dados:corrigir-legado-peruibe`
+- Rodapé do portal: coluna "Contato e Suporte" removida; "Reportar erro" movido para faixa central destacada
+- `canAccessPanel('painel')` corrigido para permitir acesso de `super_admin` sem `municipio_id`
+- `make deploy` agora usa `git fetch + reset --hard` e `docker service update --force` — garante rollover da nova imagem no Swarm e evita conflitos de git
+
+---
+
 ## [0.2.1] — 2026-09-16
 
 ### Corrigido
