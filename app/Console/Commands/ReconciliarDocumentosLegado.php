@@ -39,7 +39,7 @@ class ReconciliarDocumentosLegado extends Command
     protected $signature = 'documentos:reconciliar-legado
                             {--dry-run           : Exibe relatório sem gravar (default)}
                             {--publicar          : Publica documentos legados ainda privados}
-                            {--importar-faltantes: Importa docs ausentes (requer banco legado)}
+                            {--importar-faltantes : Importa docs ausentes (requer banco legado)}
                             {--conselhos=        : legacy_ids separados por vírgula (default: 3,7,14,19,20,26)}';
 
     protected $description = 'Reconcilia documentos do portal legado de Peruíbe com o novo sistema';
