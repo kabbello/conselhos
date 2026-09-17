@@ -5,6 +5,20 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [0.2.1] — 2026-09-16
+
+### Corrigido
+
+#### Auditoria e reconciliação de documentos (Peruíbe)
+- **Causa raiz identificada**: o portal legado (PHP Maker) exibia todos os `arquivos` publicamente, ignorando o campo `Publico` (DEFAULT 0 no schema MariaDB). O comando de importação tratava `Publico=0` como privado → documentos importados com `publico=false`.
+- **Discrepância antes**: Conselho da Cidade 73→10, CAE 52→1, COMBEM 71→16, FUNDEB 29→13, CMAS 3→0, Saúde 31→4
+- **Fix aplicado**: 214 documentos publicados via `documentos:reconciliar-legado --publicar`
+- **Pós-fix**: todos os 6 conselhos com parity total (1 doc do Conselho da Cidade ausente no DB pode ser recuperado com `--importar-faltantes` após importar o dump legado)
+- `ImportLegacyPeruibe`: corrigida lógica de `publico` para documentos e legislação (agora `true` por padrão, como era no portal antigo)
+- Novo comando `documentos:reconciliar-legado` com modos `--dry-run`, `--publicar`, `--importar-faltantes`, `--conselhos=`
+
+---
+
 ## [0.2.0] — 2026-09-16
 
 ### Adicionado
