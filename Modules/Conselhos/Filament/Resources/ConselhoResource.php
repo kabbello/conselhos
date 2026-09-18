@@ -83,7 +83,7 @@ class ConselhoResource extends Resource
                         'FISCALIZADOR' => 'Fiscalizador',
                         'NORMATIVO'    => 'Normativo',
                     ])
-                    ->required(),
+                    ->placeholder('Selecione uma opção'),
 
                 Forms\Components\Toggle::make('ativo')
                     ->label('Ativo')
